@@ -1,868 +1,756 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>THE ELEVATOR</title>
+  <title>Idle Market Tycoon</title>
   <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #050505;
-      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+    :root{
+      --sky:#8fd3ff;
+      --sky2:#dff4ff;
+      --road:#5b6472;
+      --grass:#74c365;
+      --panel:#0f1720;
+      --panel2:#172432;
+      --text:#f4fbff;
+      --gold:#ffd45c;
+      --green:#71e36f;
+      --red:#ff7a7a;
+      --shadow:0 14px 30px rgba(0,0,0,.28);
     }
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      image-rendering: auto;
-      cursor: crosshair;
+
+    *{box-sizing:border-box;}
+    html,body{margin:0;height:100%;font-family:Inter,Arial,Helvetica,sans-serif;background:#d5eefc;overflow:hidden;}
+    body{
+      background:linear-gradient(180deg,var(--sky2),var(--sky));
+      color:var(--text);
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:manipulation;
+    }
+
+    #game{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% -20%, rgba(255,255,255,.75), rgba(255,255,255,0) 40%),
+        linear-gradient(180deg, #dff5ff 0%, #b6e3ff 45%, #95d7ff 100%);
+    }
+
+    #world{
+      position:absolute;
+      inset:0;
+      transform-origin:0 0;
+      will-change:transform;
+    }
+
+    .cloud{
+      position:absolute;
+      width:180px;height:70px;
+      background:rgba(255,255,255,.85);
+      border-radius:50px;
+      filter:drop-shadow(0 10px 14px rgba(0,0,0,.08));
+      opacity:.75;
+    }
+    .cloud::before,.cloud::after{
+      content:"";position:absolute;background:inherit;border-radius:50%;
+    }
+    .cloud::before{width:80px;height:80px;left:20px;top:-28px;}
+    .cloud::after{width:100px;height:100px;right:24px;top:-36px;}
+
+    .ui-top{
+      position:fixed;left:12px;right:12px;top:12px;display:flex;gap:10px;z-index:50;pointer-events:none;
+    }
+    .card{
+      background:linear-gradient(180deg,var(--panel2),var(--panel));
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:var(--shadow);
+      border-radius:18px;
+      padding:12px 14px;
+      min-height:64px;
+      pointer-events:auto;
+    }
+    .money-card{flex:1.5;display:flex;align-items:center;gap:12px;min-width:0;}
+    .money-icon,.mini-icon{
+      width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:900;
+      background:linear-gradient(180deg,#ffec98,#ffbf33);color:#6f4300;box-shadow:inset 0 3px 0 rgba(255,255,255,.4);
+      font-size:22px;
+      flex:0 0 auto;
+    }
+    .stat-card{flex:1;display:flex;align-items:center;gap:10px;min-width:0;}
+    .label{font-size:12px;opacity:.7;line-height:1.1;}
+    .value{font-size:24px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .small{font-size:13px;opacity:.8;}
+
+    .ui-bottom{
+      position:fixed;left:12px;right:12px;bottom:12px;z-index:55;display:flex;justify-content:center;pointer-events:none;
+    }
+    .bottom-wrap{
+      pointer-events:auto;
+      width:min(980px,100%);
+      display:grid;grid-template-columns:1.1fr .9fr;gap:12px;
+    }
+    .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .action,.manager-btn{
+      background:linear-gradient(180deg,#1e8a2a,#176a21);
+      color:white;border:none;border-radius:18px;padding:14px 12px;
+      box-shadow:var(--shadow), inset 0 3px 0 rgba(255,255,255,.18);
+      cursor:pointer;font-weight:900;font-size:16px;text-align:left;
+    }
+    .action.locked{filter:grayscale(.25) brightness(.8);opacity:.85;}
+    .action .cost,.manager-btn .cost{display:block;font-size:13px;opacity:.92;font-weight:700;margin-top:6px;}
+    .manager{
+      display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    }
+    .manager-btn{background:linear-gradient(180deg,#2972ff,#1f55bd);}
+
+    .hint{
+      position:fixed;left:50%;top:90px;transform:translateX(-50%);z-index:60;
+      background:rgba(15,23,32,.88);color:#fff;border:1px solid rgba(255,255,255,.1);
+      padding:10px 14px;border-radius:14px;font-weight:700;box-shadow:var(--shadow);backdrop-filter:blur(8px);
+      opacity:0;pointer-events:none;transition:all .25s ease;
+    }
+    .hint.show{opacity:1;top:102px;}
+
+    .world-ground{
+      position:absolute;left:0;right:0;bottom:0;height:44%;
+      background:
+        linear-gradient(180deg, #80c86f 0%, #6db85d 100%);
+      border-top:4px solid rgba(255,255,255,.35);
+    }
+
+    .road{
+      position:absolute;left:0;right:0;bottom:110px;height:74px;background:var(--road);
+      box-shadow:inset 0 6px 0 rgba(255,255,255,.08), inset 0 -8px 0 rgba(0,0,0,.18);
+    }
+    .road::after{
+      content:"";position:absolute;left:0;right:0;top:33px;height:8px;
+      background:repeating-linear-gradient(90deg, transparent 0 36px, #ffef96 36px 78px);
+      opacity:.9;
+    }
+    .sidewalk{
+      position:absolute;left:0;right:0;bottom:180px;height:30px;
+      background:repeating-linear-gradient(90deg,#e7edf2 0 54px,#d5dde6 54px 108px);
+      border-top:3px solid rgba(255,255,255,.55);
+      border-bottom:4px solid rgba(0,0,0,.08);
+    }
+
+    .lot{
+      position:absolute;bottom:210px;width:250px;height:230px;border-radius:24px 24px 10px 10px;
+      background:linear-gradient(180deg,#8fcf7d,#69b55a);box-shadow:inset 0 4px 0 rgba(255,255,255,.25), var(--shadow);
+      border:3px solid rgba(255,255,255,.3);
+      overflow:visible;
+    }
+    .lot.locked{
+      background:linear-gradient(180deg,#8fd37d,#6cbc5a);
+      outline:4px dashed rgba(255,255,255,.35);
+      outline-offset:-14px;
+    }
+    .lot-title{
+      position:absolute;left:12px;top:12px;padding:8px 12px;border-radius:14px;background:rgba(9,18,25,.65);font-weight:900;font-size:16px;
+    }
+    .lot-buy{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:170px;height:92px;border:none;border-radius:20px;cursor:pointer;
+      background:linear-gradient(180deg,#39be44,#24872c);color:#fff;font-weight:900;font-size:24px;
+      box-shadow:var(--shadow), inset 0 3px 0 rgba(255,255,255,.2);
+    }
+    .lot-buy span{display:block;font-size:15px;opacity:.95;margin-top:4px;}
+
+    .market{
+      position:absolute;left:0;right:0;bottom:0;height:100%;
+    }
+    .building-shadow{
+      position:absolute;left:20px;right:20px;bottom:16px;height:26px;border-radius:50%;
+      background:radial-gradient(circle at center, rgba(0,0,0,.35), rgba(0,0,0,0) 70%);
+      filter:blur(6px);
+    }
+    .building{
+      position:absolute;left:26px;right:26px;bottom:18px;height:170px;
+    }
+    .roof{
+      position:absolute;left:0;right:0;top:0;height:26px;border-radius:18px 18px 8px 8px;background:linear-gradient(180deg,#ff8c56,#df6031);
+      box-shadow:inset 0 3px 0 rgba(255,255,255,.25);
+    }
+    .facade{
+      position:absolute;left:10px;right:10px;top:22px;bottom:0;border-radius:14px 14px 8px 8px;
+      background:linear-gradient(180deg,#f7fbff,#d9edf8 55%, #c7dfea 100%);
+      border:3px solid rgba(27,50,68,.18);
+      overflow:hidden;
+    }
+    .sign{
+      position:absolute;left:50%;transform:translateX(-50%);top:16px;padding:8px 14px;border-radius:14px;background:#1b6ae0;
+      color:#fff;font-weight:900;letter-spacing:.5px;box-shadow:0 8px 18px rgba(27,106,224,.28);
+      text-align:center;
+    }
+    .sign small{display:block;font-size:11px;opacity:.85;font-weight:700;}
+    .windows{position:absolute;left:18px;right:18px;top:60px;height:64px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+    .win{background:linear-gradient(180deg,#9be7ff,#6cc4ef);border-radius:10px;box-shadow:inset 0 3px 0 rgba(255,255,255,.55);position:relative;overflow:hidden;}
+    .win::after{content:"";position:absolute;left:12px;top:0;bottom:0;width:10px;background:rgba(255,255,255,.22);transform:skewX(-18deg);}
+    .door{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:44px;height:58px;background:linear-gradient(180deg,#7b6048,#654b35);border-radius:10px 10px 0 0;}
+    .door::after{content:"";position:absolute;right:8px;top:28px;width:6px;height:6px;background:#ffd670;border-radius:50%;}
+
+    .floor-indicator{
+      position:absolute;right:10px;top:14px;background:rgba(15,23,32,.85);color:#fff;padding:8px 10px;border-radius:12px;font-weight:900;font-size:12px;
+    }
+
+    .inside-floor{
+      position:absolute;left:24px;right:24px;bottom:14px;height:92px;border-radius:14px;background:linear-gradient(180deg,#ffe8c6,#f5d39d);
+      overflow:hidden;border:2px solid rgba(0,0,0,.08);
+    }
+    .counter{position:absolute;left:14px;right:14px;top:14px;height:20px;background:linear-gradient(180deg,#de9964,#b96c38);border-radius:10px;}
+    .shelf{position:absolute;left:16px;right:16px;bottom:12px;height:30px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    .shelf div{background:linear-gradient(180deg,#e2f3fa,#bedcea);border-radius:10px;position:relative;overflow:hidden;}
+    .shelf div::before{content:"";position:absolute;left:8px;right:8px;top:8px;height:10px;border-radius:8px;background:linear-gradient(90deg,#ef5f4a,#ffcb45,#59c86d);opacity:.9;}
+
+    .chef{
+      position:absolute;width:34px;height:64px;bottom:50px;left:54px;z-index:7;transition:left .5s linear;
+    }
+    .chef .head{position:absolute;left:7px;top:10px;width:20px;height:20px;background:#ffd8bf;border-radius:50%;z-index:2;}
+    .chef .hat{position:absolute;left:4px;top:0;width:26px;height:18px;background:#fff;border-radius:10px 10px 6px 6px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08);}
+    .chef .body{position:absolute;left:4px;top:28px;width:26px;height:22px;background:#d9f0ff;border-radius:8px 8px 6px 6px;border:2px solid rgba(0,0,0,.08);}
+    .chef .leg1,.chef .leg2{position:absolute;width:6px;height:16px;background:#29465b;top:48px;border-radius:4px;animation:walk .42s ease-in-out infinite alternate;}
+    .chef .leg1{left:8px;}
+    .chef .leg2{right:8px;animation-delay:.21s;}
+    .chef .arm1,.chef .arm2{position:absolute;width:6px;height:14px;background:#ffd8bf;top:30px;border-radius:4px;animation:walk .42s ease-in-out infinite alternate;}
+    .chef .arm1{left:0;}
+    .chef .arm2{right:0;animation-delay:.21s;}
+
+    .customer{
+      position:absolute;width:30px;height:56px;bottom:187px;z-index:8;transition:transform .12s linear;
+    }
+    .customer .head{position:absolute;left:6px;top:4px;width:18px;height:18px;background:#ffd8bf;border-radius:50%;}
+    .customer .hair{position:absolute;left:5px;top:3px;width:20px;height:10px;background:#422d21;border-radius:10px 10px 4px 4px;}
+    .customer .body{position:absolute;left:4px;top:23px;width:22px;height:19px;border-radius:8px;background:var(--shirt,#4e7bf7);}
+    .customer .leg1,.customer .leg2{position:absolute;width:5px;height:14px;background:#2b3640;top:41px;border-radius:4px;animation:walk .3s ease-in-out infinite alternate;}
+    .customer .leg1{left:8px;}
+    .customer .leg2{right:8px;animation-delay:.15s;}
+
+    @keyframes walk{
+      from{transform:translateY(0) rotate(-10deg);}to{transform:translateY(1px) rotate(10deg);}
+    }
+
+    .floating{
+      position:absolute;font-weight:900;color:#1e8a2a;text-shadow:0 2px 0 rgba(255,255,255,.7),0 8px 18px rgba(0,0,0,.18);pointer-events:none;
+      animation:floatUp .95s ease-out forwards;
+      z-index:100;
+    }
+    @keyframes floatUp{
+      0%{opacity:0;transform:translateY(8px) scale(.85);}10%{opacity:1;}100%{opacity:0;transform:translateY(-36px) scale(1.08);}
+    }
+
+    .mini-panel{
+      position:absolute;left:16px;right:16px;bottom:16px;display:flex;justify-content:space-between;gap:10px;z-index:10;
+    }
+    .mini-chip{background:rgba(15,23,32,.88);color:#fff;padding:8px 12px;border-radius:12px;font-size:12px;font-weight:800;box-shadow:var(--shadow);}
+
+    .top-scroll-hint{
+      position:fixed;right:16px;top:92px;z-index:45;background:rgba(15,23,32,.85);padding:10px 12px;border-radius:14px;font-size:12px;font-weight:800;box-shadow:var(--shadow);opacity:.9;
+    }
+
+    @media (max-width:860px){
+      .bottom-wrap{grid-template-columns:1fr;}
+      .manager{grid-template-columns:1fr 1fr;}
+      .actions{grid-template-columns:1fr 1fr 1fr;}
+      .action,.manager-btn{font-size:14px;padding:12px 10px;}
+      .lot{width:220px;height:210px;}
+    }
+
+    @media (max-width:640px){
+      .ui-top{gap:8px;}
+      .card{padding:10px 12px;border-radius:16px;min-height:58px;}
+      .value{font-size:20px;}
+      .money-icon,.mini-icon{width:34px;height:34px;font-size:18px;}
+      .actions{grid-template-columns:1fr;}
+      .manager{grid-template-columns:1fr;}
+      .top-scroll-hint{font-size:11px;right:12px;top:86px;}
+      .lot{width:200px;height:198px;}
+      .lot-buy{width:150px;height:86px;font-size:22px;}
+      .lot-buy span{font-size:13px;}
     }
   </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<script>
-"use strict";
+  <div id="game">
+    <div id="world">
+      <div class="cloud" style="left:120px; top:70px"></div>
+      <div class="cloud" style="left:760px; top:110px; transform:scale(.8)"></div>
+      <div class="cloud" style="left:1380px; top:50px; transform:scale(1.05)"></div>
+      <div class="world-ground"></div>
+      <div class="sidewalk"></div>
+      <div class="road"></div>
+      <div id="lots"></div>
+      <div id="customers"></div>
+      <div id="floating"></div>
+    </div>
+  </div>
 
-// ============================================================
-// ENGINE
-// ============================================================
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d", { alpha: false });
+  <div class="ui-top">
+    <div class="card money-card">
+      <div class="money-icon">₺</div>
+      <div style="min-width:0">
+        <div class="label">Kasa</div>
+        <div class="value" id="moneyText">0</div>
+        <div class="small" id="incomeText">Gelir: 0/sn</div>
+      </div>
+    </div>
 
-const DPR = Math.min(2, window.devicePixelRatio || 1);
-function resize() {
-  canvas.width = Math.floor(innerWidth * DPR);
-  canvas.height = Math.floor(innerHeight * DPR);
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-}
-addEventListener("resize", resize);
-resize();
+    <div class="card stat-card">
+      <div class="mini-icon">👥</div>
+      <div style="min-width:0">
+        <div class="label">Müşteri</div>
+        <div class="value" id="customerText">0</div>
+      </div>
+    </div>
 
-const Keys = Object.create(null);
-const Pressed = Object.create(null);
-addEventListener("keydown", (e) => {
-  const k = e.key.toLowerCase();
-  if (!Keys[k]) Pressed[k] = true;
-  Keys[k] = true;
-  if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
-  Audio.ensure();
-});
-addEventListener("keyup", (e) => {
-  Keys[e.key.toLowerCase()] = false;
-});
-function takePress(k) {
-  if (Pressed[k]) {
-    Pressed[k] = false;
-    return true;
-  }
-  return false;
-}
+    <div class="card stat-card">
+      <div class="mini-icon">🏢</div>
+      <div style="min-width:0">
+        <div class="label">Kat</div>
+        <div class="value" id="floorText">1</div>
+      </div>
+    </div>
+  </div>
 
-function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-function lerp(a, b, t) { return a + (b - a) * t; }
-function smoothDamp(cur, target, smoothing, dt) {
-  return lerp(cur, target, 1 - Math.exp(-smoothing * dt));
-}
+  <div class="top-scroll-hint">Kaydır: dükkan büyüdükçe sağa sola gez</div>
+  <div class="hint" id="hint"></div>
 
-const TILE = 36;
-const WORLD_W = 220;
-const WORLD_H = 22;
-const FLOOR_TOP = WORLD_H - 3;
-const GRAVITY = 1800;
-const MAX_FALL = 1100;
+  <div class="ui-bottom">
+    <div class="bottom-wrap">
+      <div class="card actions">
+        <button class="action" id="expandBtn">Yeni Alan Aç<span class="cost" id="expandCost">Maliyet: 350</span></button>
+        <button class="action" id="floorBtn">Yeni Kat Aç<span class="cost" id="floorCost">Maliyet: 2500</span></button>
+        <button class="action" id="speedBtn">Şef Hızı +<span class="cost" id="speedCost">Maliyet: 180</span></button>
+      </div>
+      <div class="card manager">
+        <button class="manager-btn" id="hireBtn">Şef Kirala<span class="cost" id="hireCost">Maliyet: 120</span></button>
+        <button class="manager-btn" id="upgradeBtn">Servis Değeri +<span class="cost" id="upgradeCost">Maliyet: 240</span></button>
+      </div>
+    </div>
+  </div>
 
-const game = {
-  floor: 1,
-  maxFloor: 100,
-  state: "play", // play | inventory | dead | ending
-  prompt: "",
-  flash: 0,
-  flicker: 0,
-  shake: 0,
-  fade: 1,
-  fadeTarget: 0,
-  transitionTimer: 0,
-  deathTimer: 0,
-  time: 0,
-};
+  <script>
+    const state = {
+      money: 220,
+      totalCustomers: 0,
+      globalFloor: 1,
+      cameraX: 0,
+      worldWidth: 1800,
+      lots: [],
+      customers: [],
+      nextCustomerId: 1,
+      chefHireCost: 120,
+      serviceUpgradeCost: 240,
+      chefSpeedCost: 180,
+      expandCost: 350,
+      floorCost: 2500,
+      drag: {active:false,startX:0,startCam:0},
+      serviceValueBonus: 0,
+      chefSpeedBonus: 0,
+      customerSpawnTimer: 0,
+      lastTime: performance.now(),
+    };
 
-const camera = { x: 0, y: 0, tx: 0, ty: 0 };
+    const world = document.getElementById('world');
+    const lotsEl = document.getElementById('lots');
+    const customersEl = document.getElementById('customers');
+    const floatingEl = document.getElementById('floating');
+    const hintEl = document.getElementById('hint');
 
-// ============================================================
-// WORLD
-// ============================================================
-function rngSeed(seed) {
-  let t = seed >>> 0;
-  return function() {
-    t += 0x6D2B79F5;
-    let r = Math.imul(t ^ (t >>> 15), 1 | t);
-    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const world = {
-  tiles: [],
-  solids: new Uint8Array(WORLD_W * WORLD_H),
-  platforms: [],
-  chest: null,
-  elevator: null,
-  monsters: [],
-  grain: null,
-};
-
-const inventory = { keys: 0, cards: 0 };
-
-function idx(x, y) { return y * WORLD_W + x; }
-function isSolidTile(x, y) {
-  if (x < 0 || y < 0 || x >= WORLD_W || y >= WORLD_H) return true;
-  return world.solids[idx(x, y)] === 1;
-}
-
-function regenerateFloor(floor) {
-  const rand = rngSeed(1000 + floor * 77);
-  world.solids.fill(0);
-  world.platforms.length = 0;
-  world.monsters.length = 0;
-
-  // boundaries + base
-  for (let x = 0; x < WORLD_W; x++) {
-    world.solids[idx(x, WORLD_H - 1)] = 1;
-    world.solids[idx(x, 0)] = 1;
-  }
-  for (let y = 0; y < WORLD_H; y++) {
-    world.solids[idx(0, y)] = 1;
-    world.solids[idx(WORLD_W - 1, y)] = 1;
-  }
-
-  // long structural floor with cracks/gaps by difficulty
-  let x = 1;
-  const gapChance = clamp(0.03 + floor * 0.0012, 0.03, 0.12);
-  while (x < WORLD_W - 2) {
-    const segment = 4 + Math.floor(rand() * 8);
-    const gap = rand() < gapChance ? 1 + Math.floor(rand() * 2) : 0;
-    for (let i = 0; i < segment && x + i < WORLD_W - 1; i++) {
-      world.solids[idx(x + i, FLOOR_TOP)] = 1;
-      if (rand() < 0.12) world.solids[idx(x + i, FLOOR_TOP - 4)] = 1;
+    function formatMoney(v){
+      if(v >= 1e9) return (v/1e9).toFixed(v>=1e10?0:1)+' B';
+      if(v >= 1e6) return (v/1e6).toFixed(v>=1e7?0:1)+' M';
+      if(v >= 1e3) return (v/1e3).toFixed(v>=1e4?0:1)+' K';
+      return Math.floor(v).toString();
     }
-    x += segment + gap;
-  }
 
-  // elevated platforms
-  const platCount = 12 + Math.floor(floor * 0.16);
-  for (let i = 0; i < platCount; i++) {
-    const w = 3 + Math.floor(rand() * 8);
-    const px = 2 + Math.floor(rand() * (WORLD_W - w - 4));
-    const py = 5 + Math.floor(rand() * 11);
-    for (let xx = px; xx < px + w; xx++) {
-      world.solids[idx(xx, py)] = 1;
+    function showHint(text){
+      hintEl.textContent = text;
+      hintEl.classList.add('show');
+      clearTimeout(showHint.t);
+      showHint.t = setTimeout(()=>hintEl.classList.remove('show'), 1600);
     }
-    if (rand() < 0.32) {
-      // pillar support, themed backrooms clutter
-      const pillarX = px + Math.floor(w * 0.5);
-      for (let yy = py + 1; yy <= FLOOR_TOP; yy++) {
-        if (rand() > 0.15) world.solids[idx(pillarX, yy)] = 1;
+
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+    function rand(min,max){ return Math.random()*(max-min)+min; }
+    function randi(min,max){ return Math.floor(rand(min,max+1)); }
+
+    function createLot(index){
+      const lot = {
+        id:index+1,
+        x: 120 + index * 300,
+        w: 250,
+        h: 230,
+        purchased: index === 0,
+        floor: 1,
+        chefs: index === 0 ? 1 : 0,
+        chefLevel: 1,
+        serviceLevel: 1,
+        incomePerService: 1,
+        serviceTime: 1,
+        progress: 0,
+      };
+      state.lots.push(lot);
+      return lot;
+    }
+
+    for(let i=0;i<5;i++) createLot(i);
+
+    function buildLotHTML(lot){
+      const el = document.createElement('div');
+      el.className = 'lot' + (lot.purchased ? '' : ' locked');
+      el.style.left = lot.x + 'px';
+      el.dataset.id = lot.id;
+
+      if(!lot.purchased){
+        el.innerHTML = `
+          <div class="lot-title">Boş Arsa #${lot.id}</div>
+          <button class="lot-buy" data-buy-lot="${lot.id}">Aç
+            <span>${formatMoney(getLotBuyCost(lot))} ₺</span>
+          </button>
+        `;
+      } else {
+        el.innerHTML = getMarketHTML(lot);
+      }
+      lotsEl.appendChild(el);
+      return el;
+    }
+
+    function getMarketHTML(lot){
+      const shelves = new Array(5).fill(0).map(()=>'<div></div>').join('');
+      const chefs = new Array(lot.chefs).fill(0).map((_,i)=>chefHTML(i, lot.chefs)).join('');
+      return `
+        <div class="market">
+          <div class="building-shadow"></div>
+          <div class="building">
+            <div class="roof"></div>
+            <div class="facade">
+              <div class="sign">MINI MARKET <small>#${lot.id}</small></div>
+              <div class="floor-indicator">Kat ${lot.floor}</div>
+              <div class="windows">
+                <div class="win"></div><div class="win"></div><div class="win"></div><div class="win"></div>
+              </div>
+              <div class="door"></div>
+              <div class="inside-floor">
+                <div class="counter"></div>
+                <div class="shelf">${shelves}</div>
+                ${chefs}
+              </div>
+            </div>
+          </div>
+          <div class="mini-panel">
+            <div class="mini-chip">Şef: ${lot.chefs}</div>
+            <div class="mini-chip">Değer: ${formatMoney(lot.incomePerService)} ₺</div>
+            <div class="mini-chip">Hız: ${(1/lot.serviceTime).toFixed(2)}/sn</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function chefHTML(i, total){
+      const step = total <= 1 ? 0 : i/(total-1);
+      const left = 16 + step * 120;
+      return `
+        <div class="chef" style="left:${left}px">
+          <div class="hat"></div>
+          <div class="head"></div>
+          <div class="body"></div>
+          <div class="arm1"></div>
+          <div class="arm2"></div>
+          <div class="leg1"></div>
+          <div class="leg2"></div>
+        </div>
+      `;
+    }
+
+    function renderLots(){
+      lotsEl.innerHTML='';
+      state.lots.forEach(buildLotHTML);
+      updateWorldWidth();
+    }
+
+    function updateWorldWidth(){
+      const lastLot = state.lots[state.lots.length-1];
+      state.worldWidth = Math.max(window.innerWidth + 300, lastLot.x + 420);
+      world.style.width = state.worldWidth + 'px';
+      world.style.height = window.innerHeight + 'px';
+      setCamera(state.cameraX);
+    }
+
+    function getPurchasedLots(){ return state.lots.filter(l=>l.purchased); }
+    function getLotBuyCost(lot){ return 300 + (lot.id-1) * 240 + Math.floor((lot.id-1)*(lot.id-1)*45); }
+
+    function setCamera(x){
+      const maxCam = Math.max(0, state.worldWidth - window.innerWidth);
+      state.cameraX = clamp(x, 0, maxCam);
+      world.style.transform = `translate3d(${-state.cameraX}px,0,0)`;
+    }
+
+    function updateUI(){
+      document.getElementById('moneyText').textContent = formatMoney(state.money) + ' ₺';
+      document.getElementById('customerText').textContent = state.totalCustomers;
+      document.getElementById('floorText').textContent = state.globalFloor;
+
+      const incomePerSec = getPurchasedLots().reduce((sum,lot)=>sum + (lot.chefs * lot.incomePerService / lot.serviceTime), 0);
+      document.getElementById('incomeText').textContent = 'Gelir: ' + formatMoney(incomePerSec) + '/sn';
+
+      document.getElementById('hireCost').textContent = 'Maliyet: ' + formatMoney(state.chefHireCost);
+      document.getElementById('upgradeCost').textContent = 'Maliyet: ' + formatMoney(state.serviceUpgradeCost);
+      document.getElementById('speedCost').textContent = 'Maliyet: ' + formatMoney(state.chefSpeedCost);
+      document.getElementById('expandCost').textContent = 'Maliyet: ' + formatMoney(state.expandCost);
+      document.getElementById('floorCost').textContent = 'Maliyet: ' + formatMoney(state.floorCost);
+    }
+
+    function moneyFly(x,y,text,color='#1e8a2a'){
+      const el = document.createElement('div');
+      el.className='floating';
+      el.textContent=text;
+      el.style.left=x+'px';
+      el.style.top=y+'px';
+      el.style.color=color;
+      floatingEl.appendChild(el);
+      setTimeout(()=>el.remove(), 950);
+    }
+
+    function buyLot(lotId){
+      const lot = state.lots.find(l=>l.id===lotId);
+      if(!lot || lot.purchased) return;
+      const cost = getLotBuyCost(lot);
+      if(state.money < cost){ showHint('Yetersiz para'); return; }
+      state.money -= cost;
+      lot.purchased = true;
+      lot.chefs = 1;
+      lot.floor = state.globalFloor;
+      lot.serviceLevel = 1 + state.serviceValueBonus;
+      lot.incomePerService = Math.max(1, lot.floor + state.serviceValueBonus);
+      lot.serviceTime = Math.max(.35, 1 - state.chefSpeedBonus * .08);
+      renderLots();
+      updateUI();
+      showHint('Yeni dükkan açıldı');
+      setCamera(lot.x - 120);
+    }
+
+    function hireChef(){
+      const lots = getPurchasedLots();
+      if(!lots.length) return;
+      if(state.money < state.chefHireCost){ showHint('Yetersiz para'); return; }
+      state.money -= state.chefHireCost;
+      let target = lots[0];
+      for(const lot of lots){
+        if(lot.chefs < target.chefs) target = lot;
+      }
+      target.chefs++;
+      state.chefHireCost = Math.floor(state.chefHireCost * 1.42 + 18);
+      renderLots();
+      updateUI();
+      showHint('Yeni şef geldi');
+      setCamera(target.x - 120);
+    }
+
+    function upgradeServiceValue(){
+      const lots = getPurchasedLots();
+      if(!lots.length) return;
+      if(state.money < state.serviceUpgradeCost){ showHint('Yetersiz para'); return; }
+      state.money -= state.serviceUpgradeCost;
+      state.serviceValueBonus++;
+      lots.forEach(lot=>{
+        lot.serviceLevel++;
+        lot.incomePerService = Math.floor(lot.incomePerService * 1.45 + 1 + state.serviceValueBonus * .4);
+      });
+      state.serviceUpgradeCost = Math.floor(state.serviceUpgradeCost * 1.56 + 40);
+      renderLots();
+      updateUI();
+      showHint('Servis değeri arttı');
+    }
+
+    function upgradeChefSpeed(){
+      const lots = getPurchasedLots();
+      if(!lots.length) return;
+      if(state.money < state.chefSpeedCost){ showHint('Yetersiz para'); return; }
+      state.money -= state.chefSpeedCost;
+      state.chefSpeedBonus++;
+      lots.forEach(lot=>{
+        lot.serviceTime = Math.max(.28, lot.serviceTime * 0.9);
+      });
+      state.chefSpeedCost = Math.floor(state.chefSpeedCost * 1.5 + 35);
+      renderLots();
+      updateUI();
+      showHint('Şefler hızlandı');
+    }
+
+    function expandBusiness(){
+      const next = state.lots.find(l=>!l.purchased);
+      if(!next){ showHint('Tüm arsalar açık'); return; }
+      if(state.money < state.expandCost){ showHint('Yetersiz para'); return; }
+      state.money -= state.expandCost;
+      buyLot(next.id);
+      state.expandCost = Math.floor(state.expandCost * 1.72 + 90);
+      updateUI();
+    }
+
+    function openNewFloor(){
+      if(state.money < state.floorCost){ showHint('Yetersiz para'); return; }
+      state.money -= state.floorCost;
+      state.globalFloor++;
+      getPurchasedLots().forEach(lot=>{
+        lot.floor = state.globalFloor;
+        lot.incomePerService = Math.floor(lot.incomePerService * 1.9 + state.globalFloor);
+      });
+      state.floorCost = Math.floor(state.floorCost * 2.3 + 800);
+      renderLots();
+      updateUI();
+      showHint('Yeni kat açıldı');
+    }
+
+    function spawnCustomer(){
+      const lots = getPurchasedLots();
+      if(!lots.length) return;
+      const lot = lots[randi(0, lots.length - 1)];
+      const targetX = lot.x + 110 + rand(-26, 26);
+      const startX = -60;
+      const shirtColors = ['#4e7bf7','#ef6a55','#33b76f','#8f63ff','#f4b43e','#16a7c9'];
+      const customer = {
+        id: state.nextCustomerId++,
+        x: startX,
+        y: 0,
+        targetX,
+        lotId: lot.id,
+        speed: rand(58, 86),
+        wait: rand(.75, 1.8),
+        phase: 'going',
+        shirt: shirtColors[randi(0, shirtColors.length-1)]
+      };
+      const el = document.createElement('div');
+      el.className = 'customer';
+      el.innerHTML = `
+        <div class="hair"></div>
+        <div class="head"></div>
+        <div class="body"></div>
+        <div class="leg1"></div>
+        <div class="leg2"></div>
+      `;
+      el.style.setProperty('--shirt', customer.shirt);
+      customersEl.appendChild(el);
+      customer.el = el;
+      state.customers.push(customer);
+    }
+
+    function serviceLot(lot, amount){
+      state.money += amount;
+      const screenX = lot.x + 120 - state.cameraX;
+      const screenY = window.innerHeight - 320;
+      moneyFly(screenX, screenY, '+' + formatMoney(amount) + ' ₺');
+    }
+
+    function updateLots(dt){
+      getPurchasedLots().forEach(lot=>{
+        lot.progress += dt * lot.chefs;
+        while(lot.progress >= lot.serviceTime){
+          lot.progress -= lot.serviceTime;
+          serviceLot(lot, lot.incomePerService);
+        }
+      });
+    }
+
+    function updateCustomers(dt){
+      for(let i=state.customers.length-1;i>=0;i--){
+        const c = state.customers[i];
+        if(c.phase === 'going'){
+          c.x += c.speed * dt;
+          if(c.x >= c.targetX){
+            c.x = c.targetX;
+            c.phase = 'waiting';
+          }
+        } else if(c.phase === 'waiting'){
+          c.wait -= dt;
+          if(c.wait <= 0){
+            c.phase = 'leaving';
+            const lot = state.lots.find(l=>l.id === c.lotId);
+            if(lot){
+              const pay = Math.max(1, Math.floor(lot.incomePerService * rand(1.1, 1.8)));
+              state.money += pay;
+              state.totalCustomers++;
+              const sx = lot.x + 120 - state.cameraX;
+              const sy = window.innerHeight - 360;
+              moneyFly(sx, sy, 'Müşteri +' + formatMoney(pay), '#1f7c27');
+            }
+            updateUI();
+          }
+        } else {
+          c.x -= c.speed * 1.2 * dt;
+          if(c.x < -80){
+            c.el.remove();
+            state.customers.splice(i,1);
+            continue;
+          }
+        }
+        c.el.style.left = c.x + 'px';
+        c.el.style.bottom = '187px';
+        c.el.style.transform = c.phase === 'leaving' ? 'scaleX(-1)' : 'scaleX(1)';
       }
     }
-  }
 
-  // ensure spawn and elevator zones
-  for (let xx = 1; xx < 16; xx++) {
-    world.solids[idx(xx, FLOOR_TOP)] = 1;
-    world.solids[idx(xx, FLOOR_TOP - 1)] = 0;
-  }
-  for (let xx = WORLD_W - 20; xx < WORLD_W - 2; xx++) {
-    world.solids[idx(xx, FLOOR_TOP)] = 1;
-    world.solids[idx(xx, FLOOR_TOP - 1)] = 0;
-  }
+    function updateCustomerSpawner(dt){
+      const lots = getPurchasedLots();
+      if(!lots.length) return;
+      state.customerSpawnTimer -= dt;
+      const interval = Math.max(.55, 2.6 - lots.length * .28 - state.globalFloor * .09);
+      if(state.customerSpawnTimer <= 0){
+        state.customerSpawnTimer = interval;
+        spawnCustomer();
+      }
+    }
 
-  world.chest = {
-    x: (26 + Math.floor(rand() * (WORLD_W - 72))) * TILE,
-    y: (FLOOR_TOP - 1) * TILE,
-    w: TILE,
-    h: TILE * 0.8,
-    opened: false,
-    loot: floor % 2 === 0 ? "cards" : "keys",
-  };
+    function gameLoop(now){
+      const dt = Math.min(.05, (now - state.lastTime)/1000);
+      state.lastTime = now;
+      updateLots(dt);
+      updateCustomers(dt);
+      updateCustomerSpawner(dt);
+      updateUI();
+      requestAnimationFrame(gameLoop);
+    }
 
-  world.elevator = {
-    x: (WORLD_W - 8) * TILE,
-    y: (FLOOR_TOP - 3) * TILE,
-    w: TILE * 2.8,
-    h: TILE * 3,
-    pulse: 0,
-  };
+    function pointerX(e){ return e.touches ? e.touches[0].clientX : e.clientX; }
+    function onDown(e){
+      state.drag.active = true;
+      state.drag.startX = pointerX(e);
+      state.drag.startCam = state.cameraX;
+    }
+    function onMove(e){
+      if(!state.drag.active) return;
+      const dx = pointerX(e) - state.drag.startX;
+      setCamera(state.drag.startCam - dx);
+    }
+    function onUp(){ state.drag.active = false; }
 
-  // monsters: roaming, chasing, sentinel
-  const roamingCount = 2 + Math.floor(floor / 25);
-  const chasingCount = 1 + Math.floor(floor / 18);
-  const sentinelCount = 1 + Math.floor(floor / 40);
+    world.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    world.addEventListener('touchstart', onDown, {passive:true});
+    window.addEventListener('touchmove', onMove, {passive:true});
+    window.addEventListener('touchend', onUp, {passive:true});
 
-  function spawnMonster(type, sx) {
-    world.monsters.push({
-      type,
-      x: sx * TILE,
-      y: (FLOOR_TOP - 1) * TILE,
-      w: TILE * 0.72,
-      h: TILE * 1.15,
-      vx: 0,
-      vy: 0,
-      dir: rand() < 0.5 ? -1 : 1,
-      speed: type === "chase" ? 110 : type === "roam" ? 80 : 0,
-      state: type === "sentinel" ? "watch" : "idle",
-      freeze: 0,
-      aggro: 0,
-      blind: 0,
-      grounded: false,
-      seen: false,
+    document.getElementById('hireBtn').addEventListener('click', hireChef);
+    document.getElementById('upgradeBtn').addEventListener('click', upgradeServiceValue);
+    document.getElementById('speedBtn').addEventListener('click', upgradeChefSpeed);
+    document.getElementById('expandBtn').addEventListener('click', expandBusiness);
+    document.getElementById('floorBtn').addEventListener('click', openNewFloor);
+
+    lotsEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-buy-lot]');
+      if(!btn) return;
+      buyLot(Number(btn.dataset.buyLot));
     });
-  }
 
-  for (let i = 0; i < roamingCount; i++) spawnMonster("roam", 35 + Math.floor(rand() * (WORLD_W - 90)));
-  for (let i = 0; i < chasingCount; i++) spawnMonster("chase", 45 + Math.floor(rand() * (WORLD_W - 100)));
-  for (let i = 0; i < sentinelCount; i++) spawnMonster("sentinel", 55 + Math.floor(rand() * (WORLD_W - 110)));
-
-  buildGrainTexture();
-}
-
-function buildGrainTexture() {
-  const off = document.createElement("canvas");
-  off.width = 220;
-  off.height = 220;
-  const g = off.getContext("2d");
-  const img = g.createImageData(off.width, off.height);
-  for (let i = 0; i < img.data.length; i += 4) {
-    const n = Math.random() * 255;
-    img.data[i] = n;
-    img.data[i + 1] = n * 0.65;
-    img.data[i + 2] = n * 0.25;
-    img.data[i + 3] = 18 + Math.random() * 20;
-  }
-  g.putImageData(img, 0, 0);
-  world.grain = off;
-}
-
-// ============================================================
-// INPUT + PHYSICS
-// ============================================================
-const player = {
-  x: 4 * TILE,
-  y: (FLOOR_TOP - 2) * TILE,
-  w: TILE * 0.7,
-  h: TILE * 1.2,
-  vx: 0,
-  vy: 0,
-  speed: 250,
-  accel: 1650,
-  jump: 620,
-  facing: 1,
-  grounded: false,
-  coyote: 0,
-  jumpBuffer: 0,
-  walkPhase: 0,
-  hurt: 0,
-};
-
-function rectSolid(x, y, w, h) {
-  const x0 = Math.floor(x / TILE);
-  const x1 = Math.floor((x + w - 1) / TILE);
-  const y0 = Math.floor(y / TILE);
-  const y1 = Math.floor((y + h - 1) / TILE);
-  for (let yy = y0; yy <= y1; yy++) {
-    for (let xx = x0; xx <= x1; xx++) {
-      if (isSolidTile(xx, yy)) return true;
-    }
-  }
-  return false;
-}
-
-function moveEntity(ent, dt) {
-  ent.x += ent.vx * dt;
-  if (rectSolid(ent.x, ent.y, ent.w, ent.h)) {
-    const dir = Math.sign(ent.vx);
-    while (!rectSolid(ent.x - dir, ent.y, ent.w, ent.h)) ent.x -= dir;
-    ent.vx = 0;
-  }
-
-  ent.y += ent.vy * dt;
-  ent.grounded = false;
-  if (rectSolid(ent.x, ent.y, ent.w, ent.h)) {
-    const dir = Math.sign(ent.vy);
-    while (!rectSolid(ent.x, ent.y - dir, ent.w, ent.h)) ent.y -= dir;
-    if (ent.vy > 0) ent.grounded = true;
-    ent.vy = 0;
-  }
-}
-
-// ============================================================
-// NPCs
-// ============================================================
-function updateMonsters(dt) {
-  for (const m of world.monsters) {
-    m.freeze = Math.max(0, m.freeze - dt);
-    m.vy = Math.min(MAX_FALL, m.vy + GRAVITY * dt * 0.8);
-    const px = player.x - m.x;
-    const py = player.y - m.y;
-    const dist = Math.hypot(px, py);
-    const canSee = dist < (m.type === "sentinel" ? 240 : 320) && Math.abs(py) < 90;
-
-    if (canSee) {
-      m.seen = true;
-      m.aggro = clamp(m.aggro + dt * 1.8, 0, 1);
-    } else {
-      m.aggro = clamp(m.aggro - dt * 0.8, 0, 1);
-    }
-
-    if (m.type === "sentinel") {
-      if (dist < 210) {
-        m.vx = Math.sign(px) * 40 * m.aggro;
-      } else {
-        m.vx = 0;
-      }
-    } else if (m.type === "chase" && m.aggro > 0.08) {
-      m.dir = px < 0 ? -1 : 1;
-      m.vx = m.dir * m.speed * (0.4 + m.aggro * 0.9);
-    } else {
-      if (Math.random() < 0.005) m.dir *= -1;
-      m.vx = m.dir * m.speed * 0.7;
-    }
-
-    // edge detection and path adjustment
-    const aheadX = m.x + (m.dir > 0 ? m.w + 4 : -4);
-    const footY = m.y + m.h + 2;
-    const wallAhead = rectSolid(aheadX, m.y + 4, 2, m.h - 6);
-    const noGroundAhead = !rectSolid(aheadX, footY, 2, 2);
-    if ((wallAhead || noGroundAhead) && m.grounded) {
-      if (m.type === "chase" && m.aggro > 0.35 && wallAhead) {
-        m.vy = -430; // hop obstacle
-      } else {
-        m.dir *= -1;
-        m.vx *= -0.5;
-        m.freeze = 0.08;
-      }
-    }
-    if (m.freeze > 0) m.vx = 0;
-
-    moveEntity(m, dt);
-
-    const overlap =
-      player.x < m.x + m.w && player.x + player.w > m.x &&
-      player.y < m.y + m.h && player.y + player.h > m.y;
-    if (overlap && game.state === "play") {
-      game.state = "dead";
-      game.deathTimer = 0;
-      game.fadeTarget = 1;
-      game.shake = 14;
-      Audio.burst(80, 0.15, "sawtooth", 0.09);
-    }
-  }
-}
-
-// ============================================================
-// SOUND (optional minimal synth)
-// ============================================================
-const Audio = {
-  ctx: null,
-  gain: null,
-  ensure() {
-    if (this.ctx) return;
-    const A = window.AudioContext || window.webkitAudioContext;
-    if (!A) return;
-    this.ctx = new A();
-    this.gain = this.ctx.createGain();
-    this.gain.gain.value = 0.1;
-    this.gain.connect(this.ctx.destination);
-  },
-  burst(freq, len, wave = "sine", vol = 0.05) {
-    if (!this.ctx) return;
-    const o = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    o.type = wave;
-    o.frequency.value = freq;
-    g.gain.value = vol;
-    g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + len);
-    o.connect(g).connect(this.gain);
-    o.start();
-    o.stop(this.ctx.currentTime + len);
-  }
-};
-
-// ============================================================
-// GAME FLOW
-// ============================================================
-function tryInteractions() {
-  game.prompt = "";
-  const chest = world.chest;
-  const elev = world.elevator;
-
-  const dc = Math.hypot((player.x + player.w * 0.5) - (chest.x + chest.w * 0.5), (player.y + player.h * 0.5) - (chest.y + chest.h * 0.5));
-  if (dc < 70 && !chest.opened && game.state === "play") {
-    game.prompt = "[E] Open Drawer";
-    if (takePress("e")) {
-      chest.opened = true;
-      if (chest.loot === "keys") inventory.keys++;
-      if (chest.loot === "cards") inventory.cards++;
-      game.state = "inventory";
-      game.transitionTimer = 0;
-      Audio.burst(420, 0.08, "triangle", 0.06);
-    }
-    return;
-  }
-
-  const de = Math.hypot((player.x + player.w * 0.5) - (elev.x + elev.w * 0.5), (player.y + player.h * 0.5) - (elev.y + elev.h * 0.5));
-  const usable = inventory.keys > 0 || inventory.cards > 0;
-  if (de < 90 && game.state === "play") {
-    game.prompt = usable ? "[E] Use Elevator" : "Elevator Locked (Need key/card)";
-    if (takePress("e") && usable) {
-      if (inventory.keys > 0) inventory.keys--;
-      else if (inventory.cards > 0) inventory.cards--;
-      game.shake = 20;
-      game.flash = 0.8;
-      game.fadeTarget = 1;
-      game.state = "inventory";
-      game.transitionTimer = 0.9;
-      Audio.burst(130, 0.2, "square", 0.06);
-      Audio.burst(88, 0.3, "sawtooth", 0.06);
-    }
-  }
-}
-
-function nextFloor() {
-  game.floor++;
-  if (game.floor > game.maxFloor) {
-    game.floor = game.maxFloor;
-    game.state = "ending";
-    game.fade = 0;
-    return;
-  }
-  regenerateFloor(game.floor);
-  player.x = 4 * TILE;
-  player.y = (FLOOR_TOP - 2) * TILE;
-  player.vx = 0;
-  player.vy = 0;
-  game.fade = 1;
-  game.fadeTarget = 0;
-  game.state = "play";
-}
-
-function update(dt) {
-  game.time += dt;
-  game.flicker = Math.max(0, game.flicker - dt);
-  if (Math.random() < 0.008) {
-    game.flicker = 0.08 + Math.random() * 0.15;
-    game.flash = 0.4;
-    Audio.burst(700, 0.04, "square", 0.02);
-  }
-
-  if (game.state === "dead") {
-    game.deathTimer += dt;
-    game.fade = smoothDamp(game.fade, 1, 3.2, dt);
-    if (game.deathTimer > 1.6) {
-      game.floor = Math.max(1, game.floor - 1);
-      regenerateFloor(game.floor);
-      player.x = 4 * TILE;
-      player.y = (FLOOR_TOP - 2) * TILE;
-      player.vx = player.vy = 0;
-      game.state = "play";
-      game.fade = 1;
-      game.fadeTarget = 0;
-    }
-    return;
-  }
-
-  if (game.state === "ending") {
-    game.fade = smoothDamp(game.fade, 0.05, 1.2, dt);
-    return;
-  }
-
-  if (game.state === "inventory") {
-    game.transitionTimer -= dt;
-    game.fade = smoothDamp(game.fade, game.fadeTarget, 4.5, dt);
-    if (takePress("e") && world.chest.opened && game.transitionTimer < 0.3) {
-      game.state = "play";
-      game.fadeTarget = 0;
-    }
-    if (game.transitionTimer <= 0 && game.fade > 0.96 && game.fadeTarget > 0.8) {
-      nextFloor();
-    }
-    return;
-  }
-
-  // movement input
-  let move = 0;
-  if (Keys["a"]) move -= 1;
-  if (Keys["d"]) move += 1;
-
-  const targetVx = move * player.speed;
-  player.vx = smoothDamp(player.vx, targetVx, player.accel / player.speed, dt);
-  if (Math.abs(move) > 0) player.facing = move;
-
-  player.jumpBuffer = takePress(" ") ? 0.12 : Math.max(0, player.jumpBuffer - dt);
-  player.coyote = player.grounded ? 0.08 : Math.max(0, player.coyote - dt);
-
-  if (player.jumpBuffer > 0 && player.coyote > 0) {
-    player.vy = -player.jump;
-    player.grounded = false;
-    player.jumpBuffer = 0;
-    player.coyote = 0;
-    Audio.burst(240, 0.05, "triangle", 0.04);
-  }
-
-  player.vy = Math.min(MAX_FALL, player.vy + GRAVITY * dt);
-  const beforeGround = player.grounded;
-  moveEntity(player, dt);
-  if (!beforeGround && player.grounded && player.vy === 0) Audio.burst(90, 0.05, "sine", 0.04);
-
-  player.walkPhase += dt * (2 + Math.abs(player.vx) * 0.02);
-
-  tryInteractions();
-  updateMonsters(dt);
-
-  camera.tx = player.x + player.w * 0.5 - innerWidth * 0.5;
-  camera.ty = player.y + player.h * 0.5 - innerHeight * 0.56;
-  camera.x = smoothDamp(camera.x, clamp(camera.tx, 0, WORLD_W * TILE - innerWidth), 5.5, dt);
-  camera.y = smoothDamp(camera.y, clamp(camera.ty, 0, WORLD_H * TILE - innerHeight), 5.5, dt);
-
-  game.shake = Math.max(0, game.shake - dt * 26);
-  game.fade = smoothDamp(game.fade, game.fadeTarget, 4.5, dt);
-  game.flash = Math.max(0, game.flash - dt * 1.6);
-}
-
-// ============================================================
-// RENDER
-// ============================================================
-function drawWorld() {
-  const sx = Math.floor(camera.x / TILE) - 2;
-  const ex = Math.ceil((camera.x + innerWidth) / TILE) + 2;
-  const sy = Math.floor(camera.y / TILE) - 2;
-  const ey = Math.ceil((camera.y + innerHeight) / TILE) + 2;
-
-  const bg = ctx.createLinearGradient(0, 0, 0, innerHeight);
-  bg.addColorStop(0, "#090707");
-  bg.addColorStop(0.6, "#0f0c0b");
-  bg.addColorStop(1, "#1b120e");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, innerWidth, innerHeight);
-
-  ctx.save();
-  const shakeX = (Math.random() - 0.5) * game.shake;
-  const shakeY = (Math.random() - 0.5) * game.shake;
-  ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
-
-  for (let y = sy; y <= ey; y++) {
-    for (let x = sx; x <= ex; x++) {
-      if (!isSolidTile(x, y)) continue;
-      const px = x * TILE;
-      const py = y * TILE;
-
-      const g = ctx.createLinearGradient(px, py, px, py + TILE);
-      g.addColorStop(0, "#221611");
-      g.addColorStop(0.55, "#19100d");
-      g.addColorStop(1, "#0d0b0a");
-      ctx.fillStyle = g;
-      ctx.fillRect(px, py, TILE, TILE);
-
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
-      ctx.fillRect(px, py, TILE, 3);
-      ctx.fillStyle = "rgba(255,146,64,0.06)";
-      ctx.fillRect(px + 1, py + 1, TILE - 2, 2);
-      ctx.strokeStyle = "rgba(32,20,12,0.9)";
-      ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
-
-      if (Math.random() < 0.06) {
-        ctx.fillStyle = "rgba(255,155,95,0.05)";
-        ctx.fillRect(px + Math.random() * TILE, py + Math.random() * TILE, 1, 1);
-      }
-    }
-  }
-
-  drawChest(world.chest);
-  drawElevator(world.elevator);
-  for (const m of world.monsters) drawMonster(m);
-  drawPlayer();
-
-  ctx.restore();
-
-  // grain overlay
-  if (world.grain) {
-    ctx.globalAlpha = 0.12;
-    const ox = (game.time * 20) % 220;
-    for (let y = -220; y < innerHeight + 220; y += 220) {
-      for (let x = -220; x < innerWidth + 220; x += 220) {
-        ctx.drawImage(world.grain, x + ox, y);
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  // pseudo-light map + flicker
-  const px = player.x - camera.x + player.w * 0.5;
-  const py = player.y - camera.y + player.h * 0.5;
-  const light = ctx.createRadialGradient(px, py, 80, px, py, 450 + Math.sin(game.time * 2.5) * 20);
-  const dim = clamp(0.75 + game.flicker * 1.2, 0.65, 0.9);
-  light.addColorStop(0, `rgba(0,0,0,${0.1 + game.flicker * 0.4})`);
-  light.addColorStop(0.45, `rgba(0,0,0,${dim})`);
-  light.addColorStop(1, "rgba(0,0,0,0.95)");
-  ctx.fillStyle = light;
-  ctx.fillRect(0, 0, innerWidth, innerHeight);
-
-  // vignette
-  const vig = ctx.createRadialGradient(innerWidth * 0.5, innerHeight * 0.5, 150, innerWidth * 0.5, innerHeight * 0.5, Math.max(innerWidth, innerHeight) * 0.8);
-  vig.addColorStop(0.2, "rgba(0,0,0,0)");
-  vig.addColorStop(1, "rgba(0,0,0,0.78)");
-  ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, innerWidth, innerHeight);
-
-  // occasional flash burst
-  if (game.flash > 0.01) {
-    ctx.fillStyle = `rgba(255,170,120,${game.flash * 0.25})`;
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
-  }
-}
-
-function drawPlayer() {
-  const x = player.x;
-  const y = player.y;
-  const bob = player.grounded ? Math.sin(player.walkPhase * 8) * 1.4 : -2;
-
-  ctx.save();
-  ctx.translate(x, y + bob);
-
-  // ambient shadow
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  ctx.beginPath();
-  ctx.ellipse(player.w * 0.5, player.h + 8, player.w * 0.5, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // body base
-  const body = ctx.createLinearGradient(0, 0, 0, player.h);
-  body.addColorStop(0, "#191919");
-  body.addColorStop(1, "#080808");
-  ctx.fillStyle = body;
-  ctx.fillRect(3, 3, player.w - 6, player.h - 3);
-
-  // highlight
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
-  ctx.fillRect(6, 6, player.w * 0.25, player.h * 0.7);
-
-  // head
-  ctx.fillStyle = "#0c0c0c";
-  ctx.fillRect(4, 0, player.w - 8, 12);
-
-  // eyes
-  ctx.fillStyle = "rgba(230,230,230,0.95)";
-  const eyeOffset = player.facing > 0 ? 0 : -1;
-  ctx.fillRect(10 + eyeOffset, 5, 3, 3);
-  ctx.fillRect(player.w - 13 + eyeOffset, 5, 3, 3);
-
-  // legs animation
-  const step = Math.sin(player.walkPhase * 14) * (player.grounded ? 2.5 : 0.8);
-  ctx.fillStyle = "#070707";
-  ctx.fillRect(8, player.h - 11, 6, 10 + step);
-  ctx.fillRect(player.w - 14, player.h - 11, 6, 10 - step);
-
-  ctx.restore();
-}
-
-function drawMonster(m) {
-  ctx.save();
-  ctx.translate(m.x, m.y);
-  const stretch = m.type === "chase" ? 1.05 : 1;
-  ctx.scale(1, stretch);
-
-  ctx.fillStyle = "#030303";
-  ctx.fillRect(0, 2, m.w, m.h - 2);
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.fillRect(m.w * 0.26, 10, 3, 3);
-  ctx.fillRect(m.w * 0.65, 10, 3, 3);
-
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(m.w * 0.28, 11, 5, 0, Math.PI * 2);
-  ctx.arc(m.w * 0.68, 11, 5, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function drawElevator(e) {
-  e.pulse += 0.08;
-  ctx.save();
-  ctx.translate(e.x, e.y);
-  const glow = 0.08 + Math.sin(e.pulse) * 0.04;
-
-  ctx.fillStyle = "#151414";
-  ctx.fillRect(0, 0, e.w, e.h);
-  ctx.strokeStyle = "#3d2a1f";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, e.w, e.h);
-
-  ctx.fillStyle = "#282222";
-  ctx.fillRect(4, 4, e.w * 0.44, e.h - 8);
-  ctx.fillRect(e.w * 0.52, 4, e.w * 0.44, e.h - 8);
-
-  ctx.fillStyle = "rgba(255,140,90,0.3)";
-  ctx.fillRect(6, 6, e.w * 0.4, 4);
-  ctx.fillRect(e.w * 0.54, 6, e.w * 0.4, 4);
-
-  ctx.fillStyle = "#0e0e0e";
-  ctx.fillRect(e.w + 6, 8, 11, 26);
-  ctx.fillStyle = `rgba(255,180,120,${0.35 + glow})`;
-  ctx.fillRect(e.w + 9, 12, 5, 5);
-  ctx.fillRect(e.w + 9, 21, 5, 5);
-
-  ctx.restore();
-}
-
-function drawChest(c) {
-  ctx.save();
-  ctx.translate(c.x, c.y);
-  ctx.fillStyle = c.opened ? "#1a1a1a" : "#201714";
-  ctx.fillRect(0, 0, c.w, c.h);
-  ctx.strokeStyle = "#423027";
-  ctx.strokeRect(0.5, 0.5, c.w - 1, c.h - 1);
-  ctx.fillStyle = "rgba(255,152,94,0.25)";
-  ctx.fillRect(2, 2, c.w - 4, 4);
-  ctx.fillStyle = "#4f3b2b";
-  ctx.fillRect(c.w * 0.46, c.h * 0.45, 4, 4);
-  ctx.restore();
-}
-
-// ============================================================
-// UI + EFFECTS
-// ============================================================
-function drawHUD() {
-  ctx.fillStyle = "rgba(0,0,0,0.42)";
-  ctx.fillRect(14, 12, 270, 82);
-  ctx.strokeStyle = "rgba(255,145,95,0.2)";
-  ctx.strokeRect(14.5, 12.5, 269, 81);
-
-  ctx.fillStyle = "#f2d8c7";
-  ctx.font = "600 15px Inter, Segoe UI, sans-serif";
-  ctx.fillText(`THE ELEVATOR`, 24, 34);
-  ctx.font = "13px Inter, Segoe UI, sans-serif";
-  ctx.fillStyle = "#c5b2a5";
-  ctx.fillText(`Floor ${game.floor} / ${game.maxFloor}`, 24, 54);
-  ctx.fillText(`Keys: ${inventory.keys}   Cards: ${inventory.cards}`, 24, 74);
-
-  if (game.prompt) {
-    const w = ctx.measureText(game.prompt).width + 24;
-    const x = innerWidth * 0.5 - w * 0.5;
-    const y = innerHeight - 56;
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(x, y, w, 32);
-    ctx.strokeStyle = "rgba(255,160,112,0.25)";
-    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 31);
-    ctx.fillStyle = "#efd9c8";
-    ctx.fillText(game.prompt, x + 12, y + 21);
-  }
-
-  if (game.state === "inventory") {
-    const boxW = 280, boxH = 240;
-    const bx = innerWidth * 0.5 - boxW * 0.5;
-    const by = innerHeight * 0.5 - boxH * 0.5;
-    ctx.fillStyle = "rgba(4,4,4,0.86)";
-    ctx.fillRect(bx, by, boxW, boxH);
-    ctx.strokeStyle = "rgba(255,170,120,0.3)";
-    ctx.strokeRect(bx + 0.5, by + 0.5, boxW - 1, boxH - 1);
-    ctx.fillStyle = "#efd7c4";
-    ctx.font = "600 16px Inter, sans-serif";
-    ctx.fillText("Drawer Inventory", bx + 16, by + 28);
-
-    const slot = 56;
-    const sx0 = bx + 24;
-    const sy0 = by + 46;
-    for (let iy = 0; iy < 3; iy++) {
-      for (let ix = 0; ix < 3; ix++) {
-        const sx = sx0 + ix * (slot + 8);
-        const sy = sy0 + iy * (slot + 8);
-        ctx.fillStyle = "rgba(18,18,18,0.95)";
-        ctx.fillRect(sx, sy, slot, slot);
-        ctx.strokeStyle = "rgba(255,150,90,0.16)";
-        ctx.strokeRect(sx + 0.5, sy + 0.5, slot - 1, slot - 1);
-      }
-    }
-    // item indicators
-    if (inventory.keys > 0) {
-      ctx.fillStyle = "#f2d27a";
-      ctx.fillRect(sx0 + 20, sy0 + 20, 14, 14);
-      ctx.fillRect(sx0 + 30, sy0 + 24, 18, 6);
-    }
-    if (inventory.cards > 0) {
-      ctx.fillStyle = "#7fd2ef";
-      ctx.fillRect(sx0 + slot + 8 + 14, sy0 + 16, 24, 18);
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.fillRect(sx0 + slot + 8 + 18, sy0 + 21, 16, 3);
-    }
-
-    ctx.fillStyle = "#baa49a";
-    ctx.font = "13px Inter, sans-serif";
-    if (game.transitionTimer > 0.2 && game.fadeTarget > 0.8) {
-      ctx.fillText("Elevator in motion...", bx + 16, by + boxH - 22);
-    } else {
-      ctx.fillText("Press E to close", bx + 16, by + boxH - 22);
-    }
-  }
-
-  if (game.state === "dead") {
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
-    ctx.fillStyle = "#f1e4dd";
-    ctx.font = "700 44px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("YOU WERE FOUND", innerWidth * 0.5, innerHeight * 0.45);
-    ctx.font = "16px Inter, sans-serif";
-    ctx.fillStyle = "#bda89d";
-    ctx.fillText("Descending one floor...", innerWidth * 0.5, innerHeight * 0.53);
-    ctx.textAlign = "left";
-  }
-
-  if (game.state === "ending") {
-    ctx.fillStyle = "rgba(0,0,0,0.62)";
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
-    ctx.fillStyle = "#f3e2d7";
-    ctx.font = "700 46px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("THE ELEVATOR", innerWidth * 0.5, innerHeight * 0.42);
-    ctx.font = "22px Inter, sans-serif";
-    ctx.fillStyle = "#c8b0a2";
-    ctx.fillText("It never went up.", innerWidth * 0.5, innerHeight * 0.5);
-    ctx.font = "13px Inter, sans-serif";
-    ctx.fillStyle = "#9a8478";
-    ctx.fillText("Refresh to descend again", innerWidth * 0.5, innerHeight * 0.58);
-    ctx.textAlign = "left";
-  }
-
-  if (game.fade > 0.01) {
-    ctx.fillStyle = `rgba(0,0,0,${clamp(game.fade, 0, 1)})`;
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
-  }
-}
-
-function render() {
-  drawWorld();
-  drawHUD();
-}
-
-// ============================================================
-// LOOP
-// ============================================================
-regenerateFloor(game.floor);
-
-let last = performance.now();
-function loop(ts) {
-  const dt = Math.min(0.033, (ts - last) / 1000);
-  last = ts;
-  update(dt);
-  render();
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-</script>
+    window.addEventListener('resize', updateWorldWidth);
+
+    renderLots();
+    updateUI();
+    setCamera(0);
+    requestAnimationFrame(gameLoop);
+    showHint('Başlangıç: 1 şef çalışıyor');
+  </script>
 </body>
 </html>
