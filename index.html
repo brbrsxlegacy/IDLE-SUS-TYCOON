@@ -290,7 +290,7 @@
 
     <script>
     const state = {
-      money: 220,
+      money: 200,
       totalCustomers: 0,
       globalFloor: 1,
       cameraX: 0,
@@ -354,6 +354,11 @@
     }
 
     for(let i=0;i<5;i++) createLot(i);
+// ensure first lot starts active and producing
+state.lots[0].purchased = true;
+state.lots[0].chefs = 1;
+state.lots[0].incomePerService = 2;
+state.lots[0].serviceTime = 1;
 
     function buildLotHTML(lot){
       const el = document.createElement('div');
@@ -603,11 +608,16 @@
 
     function updateLots(dt){
       getPurchasedLots().forEach(lot=>{
+        // GUARANTEED BASE INCOME
+        state.money += lot.chefs * 0.5 * dt;
+
         lot.progress += dt * lot.chefs;
         while(lot.progress >= lot.serviceTime){
           lot.progress -= lot.serviceTime;
           serviceLot(lot, lot.incomePerService);
         }
+      });
+    }
       });
     }
 
@@ -708,7 +718,7 @@
     updateUI();
     setCamera(0);
     requestAnimationFrame(gameLoop);
-    showHint('Başlangıç: 1 şef çalışıyor');
+    showHint('Para akışı başladı ✔');
   </script>
   <style>
     #mainMenu{
