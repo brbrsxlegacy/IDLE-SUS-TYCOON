@@ -3,409 +3,1256 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Idle Sushi Tycoon - Open Top</title>
+  <title>VideoTube Firebase</title>
   <style>
-    :root{
-      --panel:#101928;
-      --panel2:#1a2a40;
-      --text:#f4fbff;
-      --muted:rgba(255,255,255,.74);
-      --green:#22b53a;
-      --green2:#14862b;
-      --blue:#2d79ff;
-      --blue2:#1d58c6;
-      --orange:#ff9a38;
-      --orange2:#df6d13;
-      --gold:#ffd45f;
-      --shadow:0 18px 40px rgba(0,0,0,.28);
+    :root {
+      --bg: #0f0f0f;
+      --panel: #181818;
+      --panel-2: #222;
+      --soft: #2b2b2b;
+      --text: #f5f5f5;
+      --muted: #aaaaaa;
+      --accent: #ff2d55;
+      --accent-2: #ff4d6d;
+      --ok: #00c853;
+      --danger: #ff5252;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 12px 30px rgba(0,0,0,0.35);
+      --radius: 18px;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%;overflow:hidden;font-family:Inter,Arial,sans-serif;background:#a7dbff;color:var(--text)}
-    body{touch-action:none;user-select:none;-webkit-user-select:none}
-    #app{position:fixed;inset:0}
-    #uiTop{position:fixed;left:12px;right:12px;top:12px;display:flex;gap:10px;z-index:20;pointer-events:none}
-    .card{display:flex;align-items:center;gap:12px;min-width:0;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:14px 16px;box-shadow:var(--shadow);pointer-events:auto}
-    .money{flex:1.5}.stat{flex:1}
-    .icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(180deg,#ffec98,var(--gold));color:#694100;font-weight:1000;font-size:22px;flex:0 0 auto}
-    .label{font-size:12px;opacity:.72}.value{font-size:24px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{font-size:13px;opacity:.84}
-    #dragHint{position:fixed;right:12px;top:92px;z-index:19;background:rgba(31,42,57,.82);padding:12px 14px;border-radius:16px;font-size:12px;font-weight:1000;box-shadow:var(--shadow)}
-    #menu{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(7,12,20,.84),rgba(7,12,20,.92));backdrop-filter:blur(8px)}
-    .menuBox{width:min(560px,calc(100% - 24px));background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(255,255,255,.08);border-radius:28px;padding:24px;box-shadow:0 25px 60px rgba(0,0,0,.35)}
-    .menuTitle{margin:0 0 8px;font-size:38px;font-weight:1000}.menuText{color:var(--muted);line-height:1.5;margin-bottom:16px}.menuGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.menuStat{background:rgba(255,255,255,.06);border-radius:18px;padding:14px}.menuStat b{display:block;font-size:12px;opacity:.72;margin-bottom:6px}.menuStat span{font-size:22px;font-weight:1000}.menuActions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .btn{border:none;border-radius:18px;padding:16px 14px;font-size:17px;font-weight:1000;color:#fff;cursor:pointer;box-shadow:var(--shadow), inset 0 3px 0 rgba(255,255,255,.18)}
-    .play{background:linear-gradient(180deg,var(--green),var(--green2))}.upgrades{background:linear-gradient(180deg,var(--blue),var(--blue2))}
-    #fab{position:fixed;right:16px;bottom:16px;width:68px;height:68px;border:none;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,var(--green),var(--green2));color:#fff;font-size:30px;font-weight:1000;box-shadow:var(--shadow);cursor:pointer;z-index:20}
-    #panel{position:fixed;right:12px;top:88px;bottom:96px;width:min(390px,calc(100% - 24px));z-index:30;transform:translateX(calc(100% + 24px));transition:transform .25s ease;pointer-events:none}
-    #panel.open{transform:translateX(0);pointer-events:auto}
-    .panelCard{height:100%;display:flex;flex-direction:column;gap:12px;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid rgba(255,255,255,.08);border-radius:26px;padding:16px;box-shadow:var(--shadow)}
-    .panelHead{display:flex;align-items:center;justify-content:space-between}.panelHead h2{margin:0;font-size:26px}.close{width:44px;height:44px;border:none;border-radius:14px;background:linear-gradient(180deg,#344255,#202c39);color:#fff;font-size:22px;font-weight:1000;cursor:pointer}.panelSub{font-size:14px;line-height:1.45;opacity:.78}.list{display:grid;gap:10px;overflow:auto;padding-right:4px}.upgradeItem{background:rgba(255,255,255,.05);padding:14px;border-radius:18px}.upgradeItem h3{margin:0 0 6px;font-size:17px}.upgradeItem p{margin:0 0 10px;font-size:13px;line-height:1.35;opacity:.76}.buy{width:100%;border:none;border-radius:14px;padding:12px 10px;color:#fff;font-size:15px;font-weight:1000;cursor:pointer}.buy.green{background:linear-gradient(180deg,var(--green),var(--green2))}.buy.blue{background:linear-gradient(180deg,var(--blue),var(--blue2))}.buy.orange{background:linear-gradient(180deg,var(--orange),var(--orange2))}
-    #hint{position:fixed;left:50%;top:86px;transform:translateX(-50%);background:rgba(15,26,42,.9);padding:10px 14px;border-radius:14px;box-shadow:var(--shadow);z-index:25;font-size:14px;font-weight:1000;opacity:0;transition:.22s ease;pointer-events:none}#hint.show{opacity:1;top:98px}
-    @media (max-width:780px){.menuTitle{font-size:32px}.menuGrid{grid-template-columns:1fr}.menuActions{grid-template-columns:1fr}.value{font-size:20px}.icon{width:40px;height:40px;font-size:19px}#panel{top:82px;bottom:92px}}
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Inter, Arial, sans-serif; }
+    body { min-height: 100vh; }
+    button, input, textarea, select { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,15,15,0.92);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #ff7b00);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .search-wrap {
+      flex: 1;
+      max-width: 620px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-wrap input {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 999px;
+      outline: none;
+    }
+
+    .btn {
+      border: 0;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 11px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.18s ease;
+      border: 1px solid var(--border);
+    }
+    .btn:hover { transform: translateY(-1px); background: #2b2b2b; }
+    .btn.primary { background: var(--accent); }
+    .btn.primary:hover { background: var(--accent-2); }
+    .btn.ghost { background: transparent; }
+    .btn.green { background: var(--ok); color: #fff; }
+    .btn.red { background: var(--danger); color: #fff; }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px 8px 8px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #333;
+      border: 2px solid rgba(255,255,255,0.12);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 71px);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 18px 14px;
+      position: sticky;
+      top: 71px;
+      height: calc(100vh - 71px);
+      overflow: auto;
+    }
+
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--panel);
+      border-color: var(--border);
+    }
+
+    .content {
+      padding: 22px;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 18px;
+    }
+
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .video-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #111;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-meta {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      gap: 12px;
+    }
+
+    .video-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #333;
+    }
+
+    .video-title {
+      margin: 0 0 6px;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .hidden { display: none !important; }
+
+    .page {
+      display: none;
+      animation: fade 0.22s ease;
+    }
+    .page.active { display: block; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-grid input, .form-grid textarea, .form-grid select {
+      width: 100%;
+      background: #101010;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+    }
+
+    .form-grid textarea { min-height: 120px; resize: vertical; }
+
+    .upload-progress {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #101010;
+      border: 1px solid var(--border);
+    }
+
+    .upload-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #ff7b00);
+      transition: width 0.18s linear;
+    }
+
+    .watch-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+      gap: 20px;
+    }
+
+    .player-wrap video {
+      width: 100%;
+      max-height: 70vh;
+      background: #000;
+      border-radius: 18px;
+      display: block;
+    }
+
+    .comment-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .comment {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      background: #131313;
+      border-radius: 16px;
+    }
+
+    .channel-hero {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 18px;
+      background: linear-gradient(180deg, #1e1e1e, #151515);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      margin-bottom: 18px;
+    }
+
+    .channel-big-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #333;
+      border: 3px solid rgba(255,255,255,0.12);
+    }
+
+    .side-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mini-video {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .mini-video img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 14px;
+      background: #111;
+    }
+
+    .center {
+      text-align: center;
+      padding: 22px;
+    }
+
+    .tagline {
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 780px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .stat {
+      min-width: 120px;
+      background: #111;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 16px;
+    }
+
+    .empty {
+      padding: 28px;
+      background: var(--panel);
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+      color: var(--muted);
+    }
+
+    .thumb-preview {
+      width: 100%;
+      max-width: 320px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      display: none;
+      object-fit: cover;
+      aspect-ratio: 16 / 9;
+      background: #111;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #1f1f1f;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .watch-layout, .two-col { grid-template-columns: 1fr; }
+      .channel-hero { grid-template-columns: 1fr; text-align: center; }
+      .channel-big-avatar { margin: 0 auto; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar { flex-wrap: wrap; }
+      .search-wrap { order: 3; width: 100%; max-width: 100%; }
+      .video-meta { grid-template-columns: 44px 1fr; }
+      .mini-video { grid-template-columns: 120px 1fr; }
+    }
   </style>
-  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
-  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
 <body>
-  <div id="app"></div>
-  <div id="uiTop">
-    <div class="card money"><div class="icon">₺</div><div style="min-width:0"><div class="label">Kasa</div><div class="value" id="moneyText">300 ₺</div><div class="sub" id="incomeText">Gelir: 0/sn</div></div></div>
-    <div class="card stat"><div class="icon">👥</div><div style="min-width:0"><div class="label">Müşteri</div><div class="value" id="customerText">0</div></div></div>
-    <div class="card stat"><div class="icon">🍣</div><div style="min-width:0"><div class="label">Seviye</div><div class="value" id="floorText">1</div></div></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">▶</div>
+      <div>
+        <div>VideoTube</div>
+        <div class="small muted">Firebase video platform</div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <input id="searchInput" type="text" placeholder="Video veya kanal ara..." />
+      <button class="btn" id="searchBtn">Ara</button>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button class="btn primary" id="goUploadBtn">Yükle</button>
+      <div class="user-chip">
+        <img id="topAvatar" class="avatar" src="https://placehold.co/100x100/2b2b2b/ffffff?text=U" alt="avatar" />
+        <div style="min-width:0;">
+          <div id="topName" style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">Giriş yapılıyor...</div>
+          <div class="small muted" id="topUid">uid...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <button class="nav-btn active" data-page="homePage">🏠 Ana Sayfa</button>
+      <button class="nav-btn" data-page="allVideosPage">🎬 Tüm Videolar</button>
+      <button class="nav-btn" data-page="channelsPage">📺 Kanallar</button>
+      <button class="nav-btn" data-page="uploadPage">⤴ Video Yükle</button>
+      <button class="nav-btn" data-page="profilePage">👤 Profilim</button>
+      <button class="nav-btn" data-page="watchPage">▶ Oynatıcı</button>
+      <div class="panel" style="margin-top:14px;">
+        <div style="font-weight:700; margin-bottom:8px;">Durum</div>
+        <div class="small muted" id="authState">Firebase bağlanıyor...</div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section id="homePage" class="page active">
+        <h1 class="section-title">Ana Sayfa</h1>
+        <div class="panel center" style="margin-bottom:18px;">
+          <h2 style="margin:0;">Kendi mini YouTube çakman hazır</h2>
+          <p class="tagline">Buradan video yükleyebilir, videoları izleyebilir, like atabilir, yorum yazabilir, kanal ve profil resmi oluşturabilirsin. Her şey Firebase Firestore + Storage üstünden çalışır.</p>
+          <div class="pill-row" style="justify-content:center; margin-top:14px;">
+            <div class="pill">Video Upload</div>
+            <div class="pill">Like Sistemi</div>
+            <div class="pill">Yorumlar</div>
+            <div class="pill">Kanal Sayfaları</div>
+            <div class="pill">Profil Resmi</div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <h2 style="margin-top:0;">Trend videolar</h2>
+            <div id="homeVideos" class="grid"></div>
+          </div>
+          <div>
+            <h2 style="margin-top:0;">Öne çıkan kanallar</h2>
+            <div id="homeChannels" class="grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="allVideosPage" class="page">
+        <h1 class="section-title">Tüm Videolar</h1>
+        <div id="allVideosGrid" class="grid"></div>
+      </section>
+
+      <section id="channelsPage" class="page">
+        <h1 class="section-title">Kanallar</h1>
+        <div id="channelsGrid" class="grid"></div>
+      </section>
+
+      <section id="uploadPage" class="page">
+        <h1 class="section-title">Video Yükle</h1>
+        <div class="panel">
+          <div class="form-grid">
+            <input id="videoTitle" type="text" placeholder="Video başlığı" />
+            <textarea id="videoDesc" placeholder="Açıklama yaz..."></textarea>
+            <input id="videoTags" type="text" placeholder="Etiketler (virgülle) örn: oyun, komik, shorts" />
+            <div>
+              <div class="small muted" style="margin-bottom:8px;">Thumbnail seç</div>
+              <input id="thumbFile" type="file" accept="image/*" />
+              <img id="thumbPreview" class="thumb-preview" alt="thumbnail preview" />
+            </div>
+            <div>
+              <div class="small muted" style="margin-bottom:8px;">Video dosyası seç</div>
+              <input id="videoFile" type="file" accept="video/*" />
+            </div>
+            <div class="upload-progress"><div id="uploadBar" class="upload-bar"></div></div>
+            <div class="small muted" id="uploadStatus">Henüz yükleme başlamadı.</div>
+            <button class="btn primary" id="uploadBtn">Videoyu Firebase'e yükle</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="profilePage" class="page">
+        <h1 class="section-title">Profilim</h1>
+        <div class="two-col">
+          <div class="panel">
+            <h2 style="margin-top:0;">Kanal bilgileri</h2>
+            <div class="form-grid">
+              <input id="profileName" type="text" placeholder="Kanal adı" />
+              <textarea id="profileBio" placeholder="Kanal açıklaması"></textarea>
+              <div>
+                <div class="small muted" style="margin-bottom:8px;">Profil resmi yükle</div>
+                <input id="avatarFile" type="file" accept="image/*" />
+              </div>
+              <button class="btn green" id="saveProfileBtn">Profili kaydet</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h2 style="margin-top:0;">Önizleme</h2>
+            <div style="display:flex; gap:14px; align-items:center;">
+              <img id="profilePreviewAvatar" class="avatar" style="width:84px; height:84px;" src="https://placehold.co/200x200/2b2b2b/ffffff?text=U" alt="avatar" />
+              <div>
+                <div id="profilePreviewName" style="font-size:22px; font-weight:800;">Kanal Adı</div>
+                <div id="profilePreviewBio" class="muted">Henüz açıklama yok.</div>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="small muted">Videolar</div><div id="myVideoCount" style="font-size:24px; font-weight:800;">0</div></div>
+              <div class="stat"><div class="small muted">Toplam Like</div><div id="myLikeCount" style="font-size:24px; font-weight:800;">0</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="watchPage" class="page">
+        <h1 class="section-title">Video Oynatıcı</h1>
+        <div id="watchEmpty" class="empty">İzlemek için bir video seç.</div>
+        <div id="watchWrap" class="watch-layout hidden">
+          <div>
+            <div class="player-wrap panel">
+              <video id="watchVideo" controls playsinline></video>
+            </div>
+            <div class="panel" style="margin-top:18px;">
+              <h2 id="watchTitle" style="margin:0 0 10px;"></h2>
+              <div class="pill-row" style="margin-bottom:14px;">
+                <div class="pill" id="watchChannel">Kanal</div>
+                <div class="pill" id="watchDate">Tarih</div>
+                <div class="pill" id="watchLikes">0 beğeni</div>
+              </div>
+              <p id="watchDesc" class="muted" style="white-space:pre-wrap;"></p>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+                <button class="btn primary" id="likeBtn">👍 Like at</button>
+                <button class="btn" id="openChannelBtn">📺 Kanala git</button>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:18px;">
+              <h3 style="margin-top:0;">Yorumlar</h3>
+              <div class="form-grid">
+                <textarea id="commentInput" placeholder="Yorum yaz..."></textarea>
+                <button class="btn green" id="sendCommentBtn">Yorumu gönder</button>
+              </div>
+              <div id="commentList" class="comment-list"></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <h3 style="margin-top:0;">Son videolar</h3>
+              <div id="sideVideos" class="side-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="channelPage" class="page">
+        <h1 class="section-title">Kanal</h1>
+        <div id="channelHero" class="channel-hero hidden">
+          <img id="channelAvatar" class="channel-big-avatar" src="https://placehold.co/200x200/2b2b2b/ffffff?text=C" alt="kanal avatar" />
+          <div>
+            <div id="channelName" style="font-size:28px; font-weight:800;"></div>
+            <div id="channelBio" class="muted" style="margin-top:6px;"></div>
+            <div class="stats">
+              <div class="stat"><div class="small muted">Video</div><div id="channelVideoCount" style="font-size:22px; font-weight:800;">0</div></div>
+              <div class="stat"><div class="small muted">Toplam Like</div><div id="channelLikeCount" style="font-size:22px; font-weight:800;">0</div></div>
+            </div>
+          </div>
+          <div>
+            <button class="btn" id="backHomeBtn">Geri dön</button>
+          </div>
+        </div>
+        <div id="channelVideos" class="grid"></div>
+      </section>
+    </main>
   </div>
-  <div id="dragHint">Sürükle: sahneyi sağa sola kaydır</div>
-  <div id="hint"></div>
-  <div id="menu"><div class="menuBox"><h1 class="menuTitle">Idle Sushi Tycoon</h1><div class="menuText">Tek bina, üstü açık sushi restoranı. Çalışanlar içeride görünür, müşteriler sıraya girer, para pasif akar. Referanstaki oyundan ilhamlı ama sushi temalı ve özgün.</div><div class="menuGrid"><div class="menuStat"><b>Başlangıç Kasa</b><span>300 ₺</span></div><div class="menuStat"><b>Başlangıç Şefi</b><span>1</span></div><div class="menuStat"><b>Tarz</b><span>Açık Üst</span></div></div><div class="menuActions"><button class="btn play" id="startBtn">Oyna</button><button class="btn upgrades" id="menuUpgradesBtn">Yükseltmeler</button></div></div></div>
-  <button id="fab">↑</button>
-  <div id="panel"><div class="panelCard"><div class="panelHead"><h2>Yükseltmeler</h2><button class="close" id="closeBtn">×</button></div><div class="panelSub">Tek bina giderek büyür: en büyüklükte sola-sağa genişler, sonra derinleşir, dekor ve müşteri alanı artar. Küçük kalmaz.</div><div class="list"><div class="upgradeItem"><h3>Sushi Şefi Kirala</h3><p>Tezgaha yeni çalışan ekler.</p><button class="buy blue" id="hireBtn"></button></div><div class="upgradeItem"><h3>Sushi Değeri +</h3><p>Her satıştan gelen parayı artırır.</p><button class="buy orange" id="valueBtn"></button></div><div class="upgradeItem"><h3>Şef Hızı +</h3><p>Şeflerin hazırlama süresini düşürür.</p><button class="buy green" id="speedBtn"></button></div><div class="upgradeItem"><h3>Sol Bölüm Aç</h3><p>Restoranı büyütür, daha çok müşteri çeker.</p><button class="buy green" id="expandBtn"></button></div><div class="upgradeItem"><h3>Prestij / Seviye</h3><p>Gelir çarpanı artar.</p><button class="buy blue" id="floorBtn"></button></div></div></div></div>
+
+  <div id="toast" class="toast"></div>
 
   <script type="module">
-    import * as THREE from 'three';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAnalytics, isSupported as analyticsSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js';
+    import {
+      getAuth,
+      signInAnonymously,
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      addDoc,
+      collection,
+      query,
+      where,
+      orderBy,
+      serverTimestamp,
+      onSnapshot,
+      updateDoc,
+      increment,
+      getDocs,
+      limit
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
-    const app = document.getElementById('app');
-    const hintEl = document.getElementById('hint');
-    const panelEl = document.getElementById('panel');
-    const menuEl = document.getElementById('menu');
-    const moneyText = document.getElementById('moneyText');
-    const incomeText = document.getElementById('incomeText');
-    const customerText = document.getElementById('customerText');
-    const floorText = document.getElementById('floorText');
-    const hireBtn = document.getElementById('hireBtn');
-    const valueBtn = document.getElementById('valueBtn');
-    const speedBtn = document.getElementById('speedBtn');
-    const expandBtn = document.getElementById('expandBtn');
-    const floorBtn = document.getElementById('floorBtn');
-
-    const state = {
-      money: 300,
-      customersServed: 0,
-      level: 1,
-      hireCost: 140,
-      valueCost: 220,
-      speedCost: 180,
-      expandCost: 480,
-      levelCost: 2600,
-      valueLevel: 0,
-      speedLevel: 0,
-      widthLevel: 1,
-      depthLevel: 1,
-      decorLevel: 1,
-      chefs: 1,
-      income: 2,
-      speed: 1.2,
-      progress: 0,
-      queue: [],
-      customerSpawnTimer: 0,
-      dragging: false,
-      prevX: 0,
-      camTargetX: 0,
-      lastTime: performance.now(),
+    const firebaseConfig = {
+      apiKey: 'AIzaSyABqkhpL1SMRzRJ9GQLjjZE2IryqpAvMPw',
+      authDomain: 'pixelroom-ae218.firebaseapp.com',
+      databaseURL: 'https://pixelroom-ae218-default-rtdb.europe-west1.firebasedatabase.app',
+      projectId: 'pixelroom-ae218',
+      storageBucket: 'pixelroom-ae218.firebasestorage.app',
+      messagingSenderId: '720297722320',
+      appId: '1:720297722320:web:c815edae99d1efa7ff39d5',
+      measurementId: 'G-HD8901B19M'
     };
 
-    function fmt(n){
-      if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 0 : 1) + ' B';
-      if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + ' M';
-      if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 1) + ' K';
-      return Math.floor(n).toString();
-    }
-    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-    function rand(min,max){ return Math.random()*(max-min)+min; }
-    function randi(min,max){ return Math.floor(rand(min,max+1)); }
-    function showHint(text){ hintEl.textContent = text; hintEl.classList.add('show'); clearTimeout(showHint._t); showHint._t = setTimeout(()=>hintEl.classList.remove('show'),1400); }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    const renderer = new THREE.WebGLRenderer({ antialias:true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    app.appendChild(renderer.domElement);
+    analyticsSupported().then(ok => {
+      if (ok) getAnalytics(app);
+    }).catch(() => {});
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xaee0ff);
-    scene.fog = new THREE.Fog(0xaee0ff, 45, 95);
-
-    const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 300);
-    camera.position.set(0, 16, 20);
-    camera.lookAt(0, 0, 0);
-
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x7ab066, 1.1));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.15);
-    sun.position.set(16, 26, 14);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -40; sun.shadow.camera.right = 40; sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
-    scene.add(sun);
-
-    function mat(color, rough=.72, metal=.08){ return new THREE.MeshStandardMaterial({ color, roughness:rough, metalness:metal }); }
-    const mats = {
-      grass: mat(0x82cb6d), road: mat(0x636d7b), sidewalk: mat(0xe9edf4),
-      floor: mat(0xdbd0c2), wall: mat(0xf6fbff), accent: mat(0xef7b48),
-      glass: new THREE.MeshStandardMaterial({ color:0x83d9ff, roughness:.1, metalness:.08, transparent:true, opacity:.88 }),
-      wood: mat(0xb67a46), dark: mat(0x22303d), rice: mat(0xf8f3eb),
-      salmon: mat(0xf58d62), tuna: mat(0xd84c5b), skin: mat(0xffd8c2),
-      chef: mat(0xdaf0ff), green: new THREE.MeshStandardMaterial({ color:0x22b53a, emissive:0x11481b, emissiveIntensity:.25 }),
-      gold: new THREE.MeshStandardMaterial({ color:0xffd45f, emissive:0x6b560f, emissiveIntensity:.16 }),
-      table: mat(0x9e6a3f)
+    const els = {
+      authState: document.getElementById('authState'),
+      topAvatar: document.getElementById('topAvatar'),
+      topName: document.getElementById('topName'),
+      topUid: document.getElementById('topUid'),
+      searchInput: document.getElementById('searchInput'),
+      searchBtn: document.getElementById('searchBtn'),
+      goUploadBtn: document.getElementById('goUploadBtn'),
+      homeVideos: document.getElementById('homeVideos'),
+      homeChannels: document.getElementById('homeChannels'),
+      allVideosGrid: document.getElementById('allVideosGrid'),
+      channelsGrid: document.getElementById('channelsGrid'),
+      videoTitle: document.getElementById('videoTitle'),
+      videoDesc: document.getElementById('videoDesc'),
+      videoTags: document.getElementById('videoTags'),
+      thumbFile: document.getElementById('thumbFile'),
+      videoFile: document.getElementById('videoFile'),
+      thumbPreview: document.getElementById('thumbPreview'),
+      uploadBar: document.getElementById('uploadBar'),
+      uploadStatus: document.getElementById('uploadStatus'),
+      uploadBtn: document.getElementById('uploadBtn'),
+      profileName: document.getElementById('profileName'),
+      profileBio: document.getElementById('profileBio'),
+      avatarFile: document.getElementById('avatarFile'),
+      saveProfileBtn: document.getElementById('saveProfileBtn'),
+      profilePreviewAvatar: document.getElementById('profilePreviewAvatar'),
+      profilePreviewName: document.getElementById('profilePreviewName'),
+      profilePreviewBio: document.getElementById('profilePreviewBio'),
+      myVideoCount: document.getElementById('myVideoCount'),
+      myLikeCount: document.getElementById('myLikeCount'),
+      watchEmpty: document.getElementById('watchEmpty'),
+      watchWrap: document.getElementById('watchWrap'),
+      watchVideo: document.getElementById('watchVideo'),
+      watchTitle: document.getElementById('watchTitle'),
+      watchChannel: document.getElementById('watchChannel'),
+      watchDate: document.getElementById('watchDate'),
+      watchLikes: document.getElementById('watchLikes'),
+      watchDesc: document.getElementById('watchDesc'),
+      likeBtn: document.getElementById('likeBtn'),
+      openChannelBtn: document.getElementById('openChannelBtn'),
+      commentInput: document.getElementById('commentInput'),
+      sendCommentBtn: document.getElementById('sendCommentBtn'),
+      commentList: document.getElementById('commentList'),
+      sideVideos: document.getElementById('sideVideos'),
+      channelHero: document.getElementById('channelHero'),
+      channelAvatar: document.getElementById('channelAvatar'),
+      channelName: document.getElementById('channelName'),
+      channelBio: document.getElementById('channelBio'),
+      channelVideoCount: document.getElementById('channelVideoCount'),
+      channelLikeCount: document.getElementById('channelLikeCount'),
+      channelVideos: document.getElementById('channelVideos'),
+      backHomeBtn: document.getElementById('backHomeBtn'),
+      toast: document.getElementById('toast')
     };
 
-    const ground = new THREE.Mesh(new THREE.BoxGeometry(120, 1, 60), mats.grass);
-    ground.position.set(0, -0.5, 0); ground.receiveShadow = true; scene.add(ground);
-    const road = new THREE.Mesh(new THREE.BoxGeometry(120, .12, 10), mats.road);
-    road.position.set(0, .02, -12); road.receiveShadow = true; scene.add(road);
-    const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(120, .12, 3), mats.sidewalk);
-    sidewalk.position.set(0, .08, -5.6); sidewalk.receiveShadow = true; scene.add(sidewalk);
-    for(let i=-50;i<50;i+=4){ const line = new THREE.Mesh(new THREE.BoxGeometry(1.8,.12,.25), new THREE.MeshStandardMaterial({ color:0xf2e08f })); line.position.set(i,.09,-12); scene.add(line); }
+    let currentUser = null;
+    let currentProfile = null;
+    let currentWatchVideo = null;
+    let videosCache = [];
+    let channelsCache = [];
 
-    const world = new THREE.Group(); scene.add(world);
-    const customersGroup = new THREE.Group(); world.add(customersGroup);
-
-    function makeChef(){
-      const g = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(.42,.5,.28), mats.chef); body.position.y=.5;
-      const head = new THREE.Mesh(new THREE.SphereGeometry(.17,16,16), mats.skin); head.position.y=.9;
-      const hat = new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.16,18), new THREE.MeshStandardMaterial({ color:0xffffff })); hat.position.y=1.1;
-      const leg1 = new THREE.Mesh(new THREE.BoxGeometry(.08,.3,.08), mats.dark); leg1.position.set(-.08,.15,0);
-      const leg2 = leg1.clone(); leg2.position.set(.08,.15,0);
-      g.add(body,head,hat,leg1,leg2); g.userData={leg1,leg2}; g.traverse(o=>o.isMesh&&(o.castShadow=true)); return g;
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add('show');
+      setTimeout(() => els.toast.classList.remove('show'), 2500);
     }
 
-    function makeCustomer(color){
-      const g = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(.4,.5,.26), new THREE.MeshStandardMaterial({ color })); body.position.y=.48;
-      const head = new THREE.Mesh(new THREE.SphereGeometry(.16,14,14), mats.skin); head.position.y=.88;
-      const hair = new THREE.Mesh(new THREE.BoxGeometry(.24,.1,.18), mat(0x4a3325)); hair.position.set(0,.96,0);
-      const leg1 = new THREE.Mesh(new THREE.BoxGeometry(.08,.28,.08), mats.dark); leg1.position.set(-.08,.14,0);
-      const leg2 = leg1.clone(); leg2.position.set(.08,.14,0);
-      g.add(body,head,hair,leg1,leg2); g.userData={leg1,leg2}; g.traverse(o=>o.isMesh&&(o.castShadow=true)); return g;
+    function formatDate(ts) {
+      const date = ts?.toDate ? ts.toDate() : ts instanceof Date ? ts : new Date();
+      return new Intl.DateTimeFormat('tr-TR', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(date);
     }
 
-    function sushiPiece(x,z,color){
-      const g = new THREE.Group();
-      const rice = new THREE.Mesh(new THREE.BoxGeometry(.45,.14,.28), mats.rice);
-      const fish = new THREE.Mesh(new THREE.BoxGeometry(.42,.08,.24), color==='salmon'?mats.salmon:mats.tuna); fish.position.y=.09;
-      g.add(rice,fish); g.position.set(x,1.06,z); g.traverse(o=>o.isMesh&&(o.castShadow=true)); return g;
+    function initials(name = 'User') {
+      return (name || 'U').trim().slice(0, 1).toUpperCase();
     }
 
-    const restaurant = new THREE.Group();
-    world.add(restaurant);
+    function escapeHtml(str = '') {
+      return str
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
 
-    let leftExpansion = null;
-    const chefMeshes = [];
-    const queueTargets = [];
+    function switchPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const page = document.getElementById(pageId);
+      if (page) page.classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.page === pageId);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-    function buildRestaurant(){
-      restaurant.clear();
-      chefMeshes.length = 0;
-      queueTargets.length = 0;
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchPage(btn.dataset.page));
+    });
 
-      const baseWidth = 8 + (state.widthLevel - 1) * 3.4;
-      const baseDepth = 6 + (state.depthLevel - 1) * 1.6;
-      const halfW = baseWidth / 2;
-      const halfD = baseDepth / 2;
+    els.goUploadBtn.addEventListener('click', () => switchPage('uploadPage'));
+    els.backHomeBtn.addEventListener('click', () => switchPage('homePage'));
 
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(baseWidth,.3,baseDepth), mats.floor);
-      floor.position.set(0,.15,0);
-      floor.receiveShadow = true;
-      restaurant.add(floor);
+    els.profileName.addEventListener('input', () => {
+      els.profilePreviewName.textContent = els.profileName.value || 'Kanal Adı';
+      els.topName.textContent = els.profileName.value || 'İsimsiz Kanal';
+    });
 
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(baseWidth,2.5,.25), mats.wall);
-      backWall.position.set(0,1.35,-halfD + .12);
-      restaurant.add(backWall);
+    els.profileBio.addEventListener('input', () => {
+      els.profilePreviewBio.textContent = els.profileBio.value || 'Henüz açıklama yok.';
+    });
 
-      const leftWall = new THREE.Mesh(new THREE.BoxGeometry(.25,2.2,baseDepth - .8), mats.wall);
-      leftWall.position.set(-halfW + .12,1.2,-.1);
-      restaurant.add(leftWall);
+    els.thumbFile.addEventListener('change', () => {
+      const file = els.thumbFile.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      els.thumbPreview.src = url;
+      els.thumbPreview.style.display = 'block';
+    });
 
-      const rightWall = leftWall.clone();
-      rightWall.position.x = halfW - .12;
-      restaurant.add(rightWall);
+    els.avatarFile.addEventListener('change', () => {
+      const file = els.avatarFile.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      els.profilePreviewAvatar.src = url;
+      els.topAvatar.src = url;
+    });
 
-      const accent = new THREE.Mesh(new THREE.BoxGeometry(baseWidth + .1,.35,.3), mats.accent);
-      accent.position.set(0,2.55,-halfD + .18);
-      restaurant.add(accent);
-
-      const frontCounter = new THREE.Mesh(new THREE.BoxGeometry(baseWidth - 1.1,.65,.85), mats.table);
-      frontCounter.position.set(0,.48,halfD - 1.15);
-      restaurant.add(frontCounter);
-
-      const prepCounter = new THREE.Mesh(new THREE.BoxGeometry(baseWidth - 1.8,.45,.8), mats.wood);
-      prepCounter.position.set(0,.82,-.2);
-      restaurant.add(prepCounter);
-
-      const band = new THREE.Mesh(new THREE.BoxGeometry(Math.max(2.8, baseWidth - 2.6),.14,.95), mat(0x1f252c,.45,.2));
-      band.position.set(0,1.05,.15);
-      restaurant.add(band);
-      restaurant.userData.band = band;
-
-      const shelves = [];
-      const shelfCount = Math.max(6, Math.floor(baseWidth * .9));
-      for(let i=0;i<shelfCount;i++){
-        const shelf = new THREE.Mesh(new THREE.BoxGeometry(.72,.18,.35), mats.dark);
-        shelf.position.set(-halfW + 1 + i * ((baseWidth - 2) / Math.max(1, shelfCount - 1)), .65, -halfD + 1.3);
-        shelves.push(shelf);
-        restaurant.add(shelf);
-      }
-
-      const decorCount = 1 + state.decorLevel;
-      for(let i=0;i<decorCount;i++){
-        const lamp = new THREE.Mesh(new THREE.SphereGeometry(.16,14,14), new THREE.MeshStandardMaterial({ color:0xffd26a, emissive:0x8a5f12, emissiveIntensity:.45 }));
-        lamp.position.set(-halfW + 1.1 + i * ((baseWidth - 2.2) / Math.max(1, decorCount - 1)), 2.05, -halfD + .75);
-        restaurant.add(lamp);
-      }
-
-      const sushiPlates = new THREE.Group();
-      const plateCount = Math.max(6, 4 + state.widthLevel * 2);
-      for(let i=0;i<plateCount;i++){
-        const plate = new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.06,18), mat(0xf9f9fb,.4,.02));
-        const piece = sushiPiece(0,0, i%2===0 ? 'salmon' : 'tuna');
-        piece.position.y = .09;
-        plate.add(piece);
-        plate.position.set(-Math.max(1.2, (baseWidth - 3) / 2) + i * ((Math.max(2.4, baseWidth - 3)) / Math.max(1, plateCount - 1)), 1.12, .15);
-        sushiPlates.add(plate);
-      }
-      restaurant.add(sushiPlates);
-      restaurant.userData.sushiPlates = sushiPlates;
-
-      for(let i=0;i<state.chefs;i++){
-        const chef = makeChef();
-        const spacing = Math.min(1.15, Math.max(.5, (baseWidth - 3.2) / Math.max(1, state.chefs - 1 || 1)));
-        const startX = -((state.chefs - 1) * spacing) / 2;
-        chef.position.set(startX + i * spacing, .18, -.2 + (i % 2) * .35);
-        chefMeshes.push(chef);
-        restaurant.add(chef);
-      }
-
-      const customerAreaDepth = Math.min(1.9, 1.1 + state.depthLevel * .18);
-      const queueStartX = -halfW + 1.15;
-      const queueEndX = halfW - 1.15;
-      const queueCount = Math.max(5, 3 + state.widthLevel * 2);
-      for(let i=0;i<queueCount;i++){
-        queueTargets.push(new THREE.Vector3(queueStartX + i * ((queueEndX - queueStartX) / Math.max(1, queueCount - 1)), .02, halfD + customerAreaDepth));
-      }
-
-      const pad = new THREE.Mesh(new THREE.BoxGeometry(2.3,.12,1.5), mats.green);
-      pad.position.set(-halfW + 1.4,.08,halfD - .55);
-      restaurant.add(pad);
-      leftExpansion = pad;
-
-      const coin = new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.12,18), mats.gold);
-      coin.rotation.x = Math.PI / 2;
-      coin.position.set(-halfW + 1.4,1.1,halfD - .55);
-      restaurant.add(coin);
-      restaurant.userData.coin = coin;
-
-      const frontGlassCount = Math.max(3, Math.floor(baseWidth / 2.2));
-      for(let i=0;i<frontGlassCount;i++){
-        const panel = new THREE.Mesh(new THREE.BoxGeometry(.8,1,.08), mats.glass);
-        panel.position.set(-halfW + 1 + i * ((baseWidth - 2) / Math.max(1, frontGlassCount - 1)), 1.45, halfD - .05);
-        restaurant.add(panel);
+    async function ensureAnonymousAuth() {
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        console.error(err);
+        els.authState.textContent = 'Anonim giriş başarısız: ' + err.message;
+        showToast('Auth hatası: ' + err.message);
       }
     }
 
-    buildRestaurant();
+    onAuthStateChanged(auth, async user => {
+      if (!user) return;
+      currentUser = user;
+      els.authState.textContent = 'Bağlandı. UID: ' + user.uid;
+      els.topUid.textContent = user.uid.slice(0, 12) + '...';
+      await loadOrCreateProfile();
+      listenVideos();
+      listenChannels();
+      loadMyStats();
+    });
 
-    function incomePerSec(){ return (state.chefs * state.income / state.speed) * (1 + (state.widthLevel - 1) * 0.22 + (state.level - 1) * 0.15); }
-    function updateUI(){
-      moneyText.textContent = fmt(state.money) + ' ₺';
-      incomeText.textContent = 'Gelir: ' + fmt(incomePerSec()) + '/sn';
-      customerText.textContent = state.customersServed;
-      floorText.textContent = state.level;
-      hireBtn.textContent = 'Satın Al (' + fmt(state.hireCost) + ' ₺)';
-      valueBtn.textContent = 'Yükselt (' + fmt(state.valueCost) + ' ₺)';
-      speedBtn.textContent = 'Hızlandır (' + fmt(state.speedCost) + ' ₺)';
-      expandBtn.textContent = 'Bölüm Aç (' + fmt(state.expandCost) + ' ₺)';
-      floorBtn.textContent = 'Prestij (' + fmt(state.levelCost) + ' ₺)';
-    }
+    async function loadOrCreateProfile() {
+      if (!currentUser) return;
+      const profileRef = doc(db, 'channels', currentUser.uid);
+      const snap = await getDoc(profileRef);
 
-    function hireChef(){ if(state.money < state.hireCost){ showHint('Yetersiz para'); return; } state.money -= state.hireCost; state.chefs++; state.hireCost = Math.floor(state.hireCost*1.42 + 18); buildRestaurant(); updateUI(); showHint('Yeni sushi şefi geldi'); }
-    function upgradeValue(){ if(state.money < state.valueCost){ showHint('Yetersiz para'); return; } state.money -= state.valueCost; state.valueLevel++; state.income = Math.floor(state.income*1.45 + 1); state.valueCost = Math.floor(state.valueCost*1.55 + 35); updateUI(); showHint('Sushi değeri arttı'); }
-    function upgradeSpeed(){ if(state.money < state.speedCost){ showHint('Yetersiz para'); return; } state.money -= state.speedCost; state.speedLevel++; state.speed = Math.max(.35, state.speed*.9); state.speedCost = Math.floor(state.speedCost*1.45 + 28); updateUI(); showHint('Şefler hızlandı'); }
-    function expand(){ if(state.money < state.expandCost){ showHint('Yetersiz para'); return; } state.money -= state.expandCost; state.widthLevel++; if(state.widthLevel % 2 === 0) state.depthLevel++; if(state.widthLevel % 3 === 0) state.decorLevel++; state.expandCost = Math.floor(state.expandCost*1.8 + 140); buildRestaurant(); updateUI(); showHint('Bina büyüdü'); }
-    function prestige(){ if(state.money < state.levelCost){ showHint('Yetersiz para'); return; } state.money -= state.levelCost; state.level++; state.income = Math.floor(state.income*1.85 + state.level); if(state.level % 2 === 0) state.decorLevel++; state.levelCost = Math.floor(state.levelCost*2.2 + 700); buildRestaurant(); updateUI(); showHint('Seviye arttı'); }
-
-    function spawnCustomer(){
-      const colors = [0x4e7bf7,0xef6a55,0x35b86f,0x915fff,0xf4b43e,0x10a8c9];
-      const mesh = makeCustomer(colors[randi(0, colors.length-1)]);
-      const qIndex = Math.min(state.queue.length, queueTargets.length-1);
-      const target = queueTargets[qIndex] || new THREE.Vector3(0,.02,3.15);
-      mesh.position.set(-18,0,-5.6);
-      customersGroup.add(mesh);
-      state.queue.push({ mesh, x:-18, z:-5.6, target, speed:rand(4.2,5.2), wait:rand(.8,1.5), phase:'going' });
-    }
-
-    function updateQueueTargets(){
-      for(let i=0;i<state.queue.length;i++){
-        const t = queueTargets[Math.min(i, queueTargets.length-1)] || queueTargets[queueTargets.length-1];
-        state.queue[i].target = t;
+      if (!snap.exists()) {
+        const defaultName = 'Kanal-' + currentUser.uid.slice(0, 6);
+        const defaultAvatar = `https://placehold.co/200x200/2b2b2b/ffffff?text=${initials(defaultName)}`;
+        const data = {
+          uid: currentUser.uid,
+          displayName: defaultName,
+          bio: 'Yeni kanal',
+          avatarUrl: defaultAvatar,
+          createdAt: serverTimestamp()
+        };
+        await setDoc(profileRef, data);
+        currentProfile = data;
+      } else {
+        currentProfile = snap.data();
       }
+
+      fillProfileUI(currentProfile);
     }
 
-    function updateCustomers(dt, now){
-      updateQueueTargets();
-      for(let i=state.queue.length-1;i>=0;i--){
-        const c = state.queue[i];
-        if(c.phase==='going'){
-          c.x += c.speed*dt;
-          c.z += (c.target.z - c.z)*0.08;
-          if(c.x >= c.target.x){ c.x = c.target.x; c.phase = i===0 ? 'wait' : 'queue'; }
-        } else if(c.phase==='queue') {
-          c.x += (c.target.x - c.x)*0.08;
-          c.z += (c.target.z - c.z)*0.08;
-          if(i===0) c.phase='wait';
-        } else if(c.phase==='wait'){
-          c.wait -= dt;
-          c.x += (c.target.x - c.x)*0.08;
-          c.z += (c.target.z - c.z)*0.08;
-          if(c.wait<=0){
-            c.phase='leave';
-            const pay = Math.max(1, Math.floor(state.income * rand(1.2,1.9)));
-            state.money += pay;
-            state.customersServed++;
-            updateUI();
+    function fillProfileUI(profile) {
+      if (!profile) return;
+      els.profileName.value = profile.displayName || '';
+      els.profileBio.value = profile.bio || '';
+      els.profilePreviewName.textContent = profile.displayName || 'Kanal Adı';
+      els.profilePreviewBio.textContent = profile.bio || 'Henüz açıklama yok.';
+      els.profilePreviewAvatar.src = profile.avatarUrl || `https://placehold.co/200x200/2b2b2b/ffffff?text=${initials(profile.displayName)}`;
+      els.topAvatar.src = profile.avatarUrl || `https://placehold.co/200x200/2b2b2b/ffffff?text=${initials(profile.displayName)}`;
+      els.topName.textContent = profile.displayName || 'İsimsiz Kanal';
+    }
+
+    async function uploadFile(path, file, onProgress) {
+      const storageRef = ref(storage, path);
+      return new Promise((resolve, reject) => {
+        const task = uploadBytesResumable(storageRef, file);
+        task.on(
+          'state_changed',
+          snapshot => {
+            const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            onProgress?.(percent);
+          },
+          error => reject(error),
+          async () => {
+            const url = await getDownloadURL(task.snapshot.ref);
+            resolve(url);
           }
-        } else {
-          c.x -= c.speed*1.3*dt;
-          c.z -= 1.2*dt;
-          if(c.x < -24){ customersGroup.remove(c.mesh); state.queue.splice(i,1); continue; }
+        );
+      });
+    }
+
+    els.saveProfileBtn.addEventListener('click', async () => {
+      if (!currentUser) return showToast('Önce giriş tamamlanmalı');
+      const displayName = els.profileName.value.trim();
+      const bio = els.profileBio.value.trim();
+      if (!displayName) return showToast('Kanal adı boş olamaz');
+
+      try {
+        let avatarUrl = currentProfile?.avatarUrl || `https://placehold.co/200x200/2b2b2b/ffffff?text=${initials(displayName)}`;
+        const avatar = els.avatarFile.files?.[0];
+
+        if (avatar) {
+          showToast('Profil resmi yükleniyor...');
+          avatarUrl = await uploadFile(`avatars/${currentUser.uid}/${Date.now()}_${avatar.name}`, avatar);
         }
-        c.mesh.position.set(c.x, Math.abs(Math.sin(now*0.01+i))*0.04, c.z);
-        c.mesh.rotation.y = c.phase==='leave' ? Math.PI : 0;
-        c.mesh.userData.leg1.rotation.x = Math.sin(now*0.015+i)*0.4;
-        c.mesh.userData.leg2.rotation.x = -Math.sin(now*0.015+i)*0.4;
+
+        const data = {
+          uid: currentUser.uid,
+          displayName,
+          bio,
+          avatarUrl,
+          updatedAt: serverTimestamp()
+        };
+
+        await setDoc(doc(db, 'channels', currentUser.uid), data, { merge: true });
+        currentProfile = { ...currentProfile, ...data, avatarUrl };
+        fillProfileUI(currentProfile);
+        showToast('Profil kaydedildi');
+      } catch (err) {
+        console.error(err);
+        showToast('Profil kaydedilemedi: ' + err.message);
       }
+    });
+
+    els.uploadBtn.addEventListener('click', async () => {
+      if (!currentUser || !currentProfile) return showToast('Giriş bekleniyor');
+
+      const title = els.videoTitle.value.trim();
+      const description = els.videoDesc.value.trim();
+      const tags = els.videoTags.value.split(',').map(s => s.trim()).filter(Boolean);
+      const video = els.videoFile.files?.[0];
+      const thumb = els.thumbFile.files?.[0];
+
+      if (!title) return showToast('Başlık gerekli');
+      if (!video) return showToast('Video dosyası seç');
+
+      try {
+        els.uploadStatus.textContent = 'Dosyalar yükleniyor...';
+        els.uploadBar.style.width = '0%';
+
+        const safeTitle = title.replace(/[^a-zA-Z0-9ğüşöçıİĞÜŞÖÇ_-]/g, '_').slice(0, 40);
+        const videoPath = `videos/${currentUser.uid}/${Date.now()}_${safeTitle}_${video.name}`;
+        const videoUrl = await uploadFile(videoPath, video, percent => {
+          els.uploadBar.style.width = percent + '%';
+          els.uploadStatus.textContent = `Video yükleniyor: %${Math.round(percent)}`;
+        });
+
+        let thumbnailUrl = 'https://placehold.co/1280x720/111111/ffffff?text=VideoTube';
+        if (thumb) {
+          els.uploadStatus.textContent = 'Thumbnail yükleniyor...';
+          const thumbPath = `thumbnails/${currentUser.uid}/${Date.now()}_${thumb.name}`;
+          thumbnailUrl = await uploadFile(thumbPath, thumb);
+        }
+
+        const payload = {
+          title,
+          description,
+          tags,
+          videoUrl,
+          thumbnailUrl,
+          uid: currentUser.uid,
+          channelName: currentProfile.displayName,
+          channelAvatar: currentProfile.avatarUrl,
+          likesCount: 0,
+          commentsCount: 0,
+          createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, 'videos'), payload);
+        els.uploadStatus.textContent = 'Video başarıyla yüklendi';
+        els.uploadBar.style.width = '100%';
+        els.videoTitle.value = '';
+        els.videoDesc.value = '';
+        els.videoTags.value = '';
+        els.videoFile.value = '';
+        els.thumbFile.value = '';
+        els.thumbPreview.style.display = 'none';
+        showToast('Video yüklendi');
+        switchPage('allVideosPage');
+        loadMyStats();
+      } catch (err) {
+        console.error(err);
+        els.uploadStatus.textContent = 'Yükleme hatası: ' + err.message;
+        showToast('Yükleme başarısız');
+      }
+    });
+
+    function renderVideoCard(video) {
+      return `
+        <article class="card" data-watch-id="${video.id}">
+          <img class="video-thumb" src="${escapeHtml(video.thumbnailUrl || '')}" alt="thumbnail" />
+          <div class="video-meta">
+            <img class="video-avatar" src="${escapeHtml(video.channelAvatar || '')}" alt="avatar" />
+            <div>
+              <h3 class="video-title">${escapeHtml(video.title || 'Başlıksız')}</h3>
+              <div class="muted small">${escapeHtml(video.channelName || 'İsimsiz Kanal')}</div>
+              <div class="pill-row" style="margin-top:8px;">
+                <div class="pill">👍 ${video.likesCount || 0}</div>
+                <div class="pill">💬 ${video.commentsCount || 0}</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
     }
 
-    function updateProduction(dt, now){
-      state.progress += dt * state.chefs;
-      while(state.progress >= state.speed){ state.progress -= state.speed; const sizeBoost = 1 + (state.widthLevel - 1) * 0.22 + (state.depthLevel - 1) * 0.12; state.money += Math.floor(state.income * sizeBoost); }
-      if(restaurant.userData.coin){ restaurant.userData.coin.rotation.z += dt*2; restaurant.userData.coin.position.y = 1.1 + Math.sin(now*0.003)*0.12; }
-      chefMeshes.forEach((chef,i)=>{ const t = now*0.006+i; chef.userData.leg1.rotation.x = Math.sin(t)*0.35; chef.userData.leg2.rotation.x = -Math.sin(t)*0.35; chef.position.z = -.15 + Math.sin(t*0.7)*0.06; });
+    function renderChannelCard(channel, stats = {}) {
+      return `
+        <article class="card" data-channel-id="${channel.uid}">
+          <div style="padding:18px; text-align:center;">
+            <img class="channel-big-avatar" style="width:90px; height:90px;" src="${escapeHtml(channel.avatarUrl || '')}" alt="avatar" />
+            <h3 style="margin:12px 0 6px;">${escapeHtml(channel.displayName || 'Kanal')}</h3>
+            <div class="muted small">${escapeHtml(channel.bio || 'Açıklama yok')}</div>
+            <div class="pill-row" style="justify-content:center; margin-top:12px;">
+              <div class="pill">🎬 ${stats.videoCount || 0}</div>
+              <div class="pill">👍 ${stats.likeCount || 0}</div>
+            </div>
+          </div>
+        </article>
+      `;
     }
 
-    function updateSpawner(dt){
-      state.customerSpawnTimer -= dt;
-      const interval = Math.max(.6, 2 - state.widthLevel*0.18 - state.level*0.06);
-      if(state.customerSpawnTimer <= 0 && state.queue.length < Math.max(4, 2 + state.widthLevel)){ state.customerSpawnTimer = interval; spawnCustomer(); }
+    function bindVideoClicks() {
+      document.querySelectorAll('[data-watch-id]').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.getAttribute('data-watch-id');
+          const video = videosCache.find(v => v.id === id);
+          if (video) openVideo(video);
+        });
+      });
     }
 
-    function updateCamera(){ state.camTargetX = clamp(state.camTargetX, -4, 4); camera.position.x += (state.camTargetX - camera.position.x)*0.1; camera.lookAt(camera.position.x, 1.5, .4); }
-    function onDown(e){ state.dragging = true; state.prevX = e.touches ? e.touches[0].clientX : e.clientX; }
-    function onMove(e){ if(!state.dragging) return; const x = e.touches ? e.touches[0].clientX : e.clientX; const dx = x - state.prevX; state.prevX = x; state.camTargetX -= dx*0.02; }
-    function onUp(){ state.dragging = false; }
-    renderer.domElement.addEventListener('mousedown', onDown); window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp); renderer.domElement.addEventListener('touchstart', onDown, { passive:true }); window.addEventListener('touchmove', onMove, { passive:true }); window.addEventListener('touchend', onUp, { passive:true });
+    function bindChannelClicks() {
+      document.querySelectorAll('[data-channel-id]').forEach(card => {
+        card.addEventListener('click', () => {
+          const uid = card.getAttribute('data-channel-id');
+          openChannel(uid);
+        });
+      });
+    }
 
-    document.getElementById('startBtn').addEventListener('click', ()=>{ menuEl.style.display='none'; showHint('Oyun başladı'); });
-    document.getElementById('menuUpgradesBtn').addEventListener('click', ()=>{ menuEl.style.display='none'; panelEl.classList.add('open'); });
-    document.getElementById('fab').addEventListener('click', ()=>panelEl.classList.toggle('open'));
-    document.getElementById('closeBtn').addEventListener('click', ()=>panelEl.classList.remove('open'));
-    hireBtn.addEventListener('click', hireChef); valueBtn.addEventListener('click', upgradeValue); speedBtn.addEventListener('click', upgradeSpeed); expandBtn.addEventListener('click', expand); floorBtn.addEventListener('click', prestige);
+    function listenVideos() {
+      const qy = query(collection(db, 'videos'), orderBy('createdAt', 'desc'));
+      onSnapshot(qy, snapshot => {
+        videosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderVideoAreas(videosCache);
+        loadMyStats();
+      }, err => {
+        console.error(err);
+        showToast('Videolar çekilemedi: index gerekebilir');
+      });
+    }
 
-    window.addEventListener('resize', ()=>{ camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+    async function listenChannels() {
+      const qy = query(collection(db, 'channels'), limit(24));
+      onSnapshot(qy, async snapshot => {
+        channelsCache = snapshot.docs.map(d => d.data());
+        await renderChannelAreas(channelsCache);
+      });
+    }
 
-    function animate(now){ const dt = Math.min(0.05, (now - state.lastTime)/1000); state.lastTime = now; updateProduction(dt, now); updateCustomers(dt, now); updateSpawner(dt); updateCamera(); updateUI(); renderer.render(scene, camera); requestAnimationFrame(animate); }
+    function renderVideoAreas(list) {
+      const html = list.length ? list.map(renderVideoCard).join('') : '<div class="empty">Henüz video yok.</div>';
+      els.allVideosGrid.innerHTML = html;
+      els.homeVideos.innerHTML = (list.slice(0, 4).length ? list.slice(0, 4).map(renderVideoCard).join('') : '<div class="empty">Henüz video yok.</div>');
+      els.sideVideos.innerHTML = list.slice(0, 8).map(v => `
+        <div class="mini-video" data-watch-id="${v.id}">
+          <img src="${escapeHtml(v.thumbnailUrl || '')}" alt="thumb" />
+          <div>
+            <div style="font-weight:700; line-height:1.35;">${escapeHtml(v.title || '')}</div>
+            <div class="small muted" style="margin-top:5px;">${escapeHtml(v.channelName || '')}</div>
+            <div class="small muted">👍 ${v.likesCount || 0}</div>
+          </div>
+        </div>
+      `).join('') || '<div class="empty">Video yok.</div>';
+      bindVideoClicks();
+    }
 
-    updateUI();
-    showHint('Açık üst sushi bar hazır');
-    requestAnimationFrame(animate);
+    async function getChannelStats(uid) {
+      const qy = query(collection(db, 'videos'), where('uid', '==', uid));
+      const snap = await getDocs(qy);
+      const items = snap.docs.map(d => d.data());
+      return {
+        videoCount: items.length,
+        likeCount: items.reduce((sum, v) => sum + (v.likesCount || 0), 0)
+      };
+    }
+
+    async function renderChannelAreas(list) {
+      if (!list.length) {
+        els.channelsGrid.innerHTML = '<div class="empty">Henüz kanal yok.</div>';
+        els.homeChannels.innerHTML = '<div class="empty">Henüz kanal yok.</div>';
+        return;
+      }
+
+      const statsEntries = await Promise.all(list.map(async ch => ({ uid: ch.uid, ...(await getChannelStats(ch.uid)) })));
+      const statsMap = Object.fromEntries(statsEntries.map(s => [s.uid, s]));
+
+      els.channelsGrid.innerHTML = list.map(ch => renderChannelCard(ch, statsMap[ch.uid])).join('');
+      els.homeChannels.innerHTML = list.slice(0, 4).map(ch => renderChannelCard(ch, statsMap[ch.uid])).join('');
+      bindChannelClicks();
+    }
+
+    async function loadMyStats() {
+      if (!currentUser) return;
+      const stats = await getChannelStats(currentUser.uid);
+      els.myVideoCount.textContent = stats.videoCount;
+      els.myLikeCount.textContent = stats.likeCount;
+    }
+
+    function openVideo(video) {
+      currentWatchVideo = video;
+      els.watchEmpty.classList.add('hidden');
+      els.watchWrap.classList.remove('hidden');
+      els.watchVideo.src = video.videoUrl || '';
+      els.watchTitle.textContent = video.title || 'Başlıksız';
+      els.watchChannel.textContent = video.channelName || 'Kanal';
+      els.watchDate.textContent = formatDate(video.createdAt);
+      els.watchLikes.textContent = `${video.likesCount || 0} beğeni`;
+      els.watchDesc.textContent = video.description || 'Açıklama yok.';
+      switchPage('watchPage');
+      loadComments(video.id);
+    }
+
+    async function loadComments(videoId) {
+      const qy = query(collection(db, 'videos', videoId, 'comments'), orderBy('createdAt', 'desc'));
+      onSnapshot(qy, snapshot => {
+        const items = snapshot.docs.map(d => d.data());
+        els.commentList.innerHTML = items.length ? items.map(c => `
+          <div class="comment">
+            <img class="avatar" src="${escapeHtml(c.authorAvatar || 'https://placehold.co/100x100/2b2b2b/ffffff?text=U')}" alt="avatar" />
+            <div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <strong>${escapeHtml(c.authorName || 'Kullanıcı')}</strong>
+                <span class="small muted">${formatDate(c.createdAt)}</span>
+              </div>
+              <div style="margin-top:6px; white-space:pre-wrap; line-height:1.5;">${escapeHtml(c.text || '')}</div>
+            </div>
+          </div>
+        `).join('') : '<div class="empty">Henüz yorum yok.</div>';
+      });
+    }
+
+    els.sendCommentBtn.addEventListener('click', async () => {
+      if (!currentWatchVideo || !currentUser || !currentProfile) return showToast('Önce video seç');
+      const text = els.commentInput.value.trim();
+      if (!text) return showToast('Yorum boş olamaz');
+
+      try {
+        await addDoc(collection(db, 'videos', currentWatchVideo.id, 'comments'), {
+          uid: currentUser.uid,
+          authorName: currentProfile.displayName,
+          authorAvatar: currentProfile.avatarUrl,
+          text,
+          createdAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'videos', currentWatchVideo.id), {
+          commentsCount: increment(1)
+        });
+        els.commentInput.value = '';
+        showToast('Yorum gönderildi');
+      } catch (err) {
+        console.error(err);
+        showToast('Yorum gönderilemedi');
+      }
+    });
+
+    els.likeBtn.addEventListener('click', async () => {
+      if (!currentWatchVideo || !currentUser) return showToast('Önce video aç');
+      const likeRef = doc(db, 'videos', currentWatchVideo.id, 'likes', currentUser.uid);
+      const snap = await getDoc(likeRef);
+      if (snap.exists()) return showToast('Bu videoya zaten like attın');
+
+      try {
+        await setDoc(likeRef, {
+          uid: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'videos', currentWatchVideo.id), {
+          likesCount: increment(1)
+        });
+        showToast('Like atıldı');
+      } catch (err) {
+        console.error(err);
+        showToast('Like başarısız');
+      }
+    });
+
+    els.openChannelBtn.addEventListener('click', () => {
+      if (!currentWatchVideo) return;
+      openChannel(currentWatchVideo.uid);
+    });
+
+    async function openChannel(uid) {
+      const profileSnap = await getDoc(doc(db, 'channels', uid));
+      if (!profileSnap.exists()) return showToast('Kanal bulunamadı');
+      const ch = profileSnap.data();
+      const qy = query(collection(db, 'videos'), where('uid', '==', uid));
+      const snap = await getDocs(qy);
+      const videos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const likeCount = videos.reduce((sum, v) => sum + (v.likesCount || 0), 0);
+
+      els.channelHero.classList.remove('hidden');
+      els.channelAvatar.src = ch.avatarUrl || `https://placehold.co/200x200/2b2b2b/ffffff?text=${initials(ch.displayName)}`;
+      els.channelName.textContent = ch.displayName || 'Kanal';
+      els.channelBio.textContent = ch.bio || 'Açıklama yok';
+      els.channelVideoCount.textContent = videos.length;
+      els.channelLikeCount.textContent = likeCount;
+      els.channelVideos.innerHTML = videos.length ? videos.map(renderVideoCard).join('') : '<div class="empty">Bu kanalda video yok.</div>';
+      bindVideoClicks();
+      switchPage('channelPage');
+    }
+
+    function runSearch() {
+      const term = els.searchInput.value.trim().toLowerCase();
+      if (!term) {
+        renderVideoAreas(videosCache);
+        renderChannelAreas(channelsCache);
+        return;
+      }
+
+      const filteredVideos = videosCache.filter(v =>
+        [v.title, v.description, v.channelName, ...(v.tags || [])]
+          .join(' ')
+          .toLowerCase()
+          .includes(term)
+      );
+
+      const filteredChannels = channelsCache.filter(c =>
+        [c.displayName, c.bio]
+          .join(' ')
+          .toLowerCase()
+          .includes(term)
+      );
+
+      els.allVideosGrid.innerHTML = filteredVideos.length ? filteredVideos.map(renderVideoCard).join('') : '<div class="empty">Video bulunamadı.</div>';
+      els.channelsGrid.innerHTML = filteredChannels.length
+        ? filteredChannels.map(c => renderChannelCard(c, {
+            videoCount: videosCache.filter(v => v.uid === c.uid).length,
+            likeCount: videosCache.filter(v => v.uid === c.uid).reduce((s, v) => s + (v.likesCount || 0), 0)
+          })).join('')
+        : '<div class="empty">Kanal bulunamadı.</div>';
+      bindVideoClicks();
+      bindChannelClicks();
+      switchPage('allVideosPage');
+    }
+
+    els.searchBtn.addEventListener('click', runSearch);
+    els.searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') runSearch();
+    });
+
+    ensureAnonymousAuth();
   </script>
 </body>
 </html>
